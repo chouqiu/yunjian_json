@@ -1,5 +1,9 @@
 package com.yunjian.v2.yunjian_json;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.json.JSONTokener;
+
 import android.os.Bundle;
 import android.app.Activity;
 import android.view.Menu;
@@ -38,21 +42,37 @@ public class Yunjian_json extends Activity {
 		
 		@Override
 		protected void onPostExecGet(Boolean succ) {
-			_info.setText("Get\n");
+			_info.setText("Get "+this.getHttpCode()+"\n");
 			if ( succ ) {
-				_info.append("result: "+this.getHttpCode()+"\n"+this.toString());
+				_info.append("result: \n"+this.toString());
 			} else {
-				_info.append("errmsg: "+this.getHttpCode()+"\n"+_errmsg);
+				_info.append("errmsg: \n"+_errmsg);
 			}
 		}
 		
 		@Override
 		protected void onPostExecPost(Boolean succ) {
-			_info.setText("Post\n");
+			_info.setText("Post "+this.getHttpCode()+"\n");
 			if ( succ ) {
-				_info.append("result: "+this.getHttpCode()+"\n"+this.toString());
+				//_info.append("result: "+this.getHttpCode()+"\n"+this.toString());
+				JSONTokener jsParser = new JSONTokener(this.toString());
+
+				try {
+					JSONObject ret = (JSONObject)jsParser.nextValue();
+					JSONObject err = ret.getJSONObject("errors");
+					if ( err != null ) {
+						_info.append("errmsg \""+err.getJSONArray("base").getString(0)+"\"");
+					} else {
+						_info.append("result \n"+ret.getString("token_key")+": "+ret.getString("token_value"));
+					}
+				} catch (JSONException e) {
+					// TODO Auto-generated catch block
+					//e.printStackTrace();
+					_info.append("json error: "+e.toString());
+				}
+				
 			} else {
-				_info.append("errmsg: "+this.getHttpCode()+"\n"+_errmsg);
+				_info.append("errmsg: \n"+_errmsg);
 			}
 		}
 	}
