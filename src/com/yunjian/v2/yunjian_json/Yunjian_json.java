@@ -10,6 +10,8 @@ import org.json.JSONTokener;
 import android.os.Bundle;
 import android.app.Activity;
 import android.view.Menu;
+import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 
 public class Yunjian_json extends Activity {
@@ -27,6 +29,18 @@ public class Yunjian_json extends Activity {
 		_json_data = null;
 		_sess_key = null;
 		_info = (TextView)findViewById(R.id.textView_rst);
+		((Button)findViewById(R.id.btn_showlst)).setOnClickListener(new View.OnClickListener() {
+			public void onClick(View v) {
+				GetJson proc = new GetJson();
+				// TODO Auto-generated method stub
+				if ( _sess_key != null ) {
+					//proc.initCookies(_sess_key.getName(), _sess_key.getValue(), "106.187.41.90");
+					proc.initCookies("remember_token", _sess_key.getValue(), "106.187.41.90");
+					String url = "http://106.187.41.90/zone_supervisor_zones.json";
+					proc.execute(url, _testagent, "get");
+				}
+			}
+		});
 	}
 	
 	@Override
@@ -85,7 +99,7 @@ public class Yunjian_json extends Activity {
 				try {
 					ret = (JSONObject)jsParser.nextValue();
 					int total = ret.getInt("total_entries");
-					_info.append("×ÜÁ¿£º"+total+"\n");
+					_info.append("æ€»é‡: "+total+"\n");
 					if ( total > 0 ) {
 						JSONArray orglst = ret.getJSONArray("zones");
 						_info.append("zone_id: "+orglst.getJSONObject(0).getInt("zone_admin_id")+"\n");
