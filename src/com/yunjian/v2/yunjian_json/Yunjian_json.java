@@ -9,6 +9,7 @@ import org.json.JSONTokener;
 
 import android.os.Bundle;
 import android.app.Activity;
+import android.content.Intent;
 import android.view.Menu;
 import android.view.View;
 import android.widget.Button;
@@ -39,6 +40,13 @@ public class Yunjian_json extends Activity {
 					String url = "http://106.187.41.90/zone_supervisor_zones.json";
 					proc.execute(url, _testagent, "get");
 				}
+			}
+		});
+		
+		((Button)findViewById(R.id.btn_camera)).setOnClickListener(new View.OnClickListener() {
+			public void onClick(View v) {
+				Intent camera_activity = new Intent(Yunjian_json.this, Camera);
+				Yunjian_json.this.startActivity(camera_activity);
 			}
 		});
 	}
