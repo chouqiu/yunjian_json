@@ -1,31 +1,126 @@
 package com.yunjian.v2.yunjian_json;
 
+import java.io.IOException;
+
 import android.app.Activity;
+import android.content.Context;
+import android.content.pm.ActivityInfo;
+import android.graphics.Color;
+import android.graphics.ImageFormat;
 import android.graphics.PixelFormat;
 import android.os.Bundle;
+import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class Camera extends Activity {
-	private SurfaceView _cv;
+	private CameraView _cv;
+	private android.hardware.Camera _ca;
+	//private Bitmap _map;
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		
+		this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
 		this.requestWindowFeature(Window.FEATURE_NO_TITLE);
 		getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
 		getWindow().setFormat(PixelFormat.TRANSLUCENT);
 		
 		FrameLayout fl = new FrameLayout(this);
-		_cv = new SurfaceView(this);
+		_cv = new CameraView(this);
 		fl.addView(_cv);
 		TextView tv = new TextView(this);
-		tv.setText("请拍摄");
+		tv.setTextColor(Color.argb(155, 255, 255, 255));
+		tv.setTextSize(20);
+		tv.setText("姓名：王岳\n战斗力：5\n等级：一级");
 		fl.addView(tv);
 		
 		setContentView(fl);
+	}
+	
+	class CameraView extends SurfaceView {
+		private SurfaceHolder _holder = null;
+		
+		public CameraView(Context context) {
+			super(context);
+			
+			// 操作surface的holder
+			_holder = this.getHolder();
+			// 创建SurfaceHolder.Callback对象
+			_holder.addCallback(new SurfaceHolder.Callback() {
+
+				@Override
+				public void surfaceDestroyed(SurfaceHolder holder) {
+					if ( _ca != null ) {
+						// 停止预览
+						_ca.stopPreview();
+						// 释放相机资源并置空
+						_ca.release();
+					}
+					_ca = null;
+				}
+
+				@Override
+				public void surfaceCreated(SurfaceHolder holder) {
+					//当预览视图创建的时候开启相机
+					_ca = android.hardware.Camera.open();
+					try {
+						//设置预览
+						_ca.setPreviewDisplay(_holder);
+					} catch (IOException e) {
+						// 释放相机资源并置空
+						_ca.release();
+						_ca = null;
+					}
+
+				}
+
+				//当surface视图数据发生变化时，处理预览信息
+				@Override
+				public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+					
+					if ( _ca != null ) {
+						//获得相机参数对象
+						android.hardware.Camera.Parameters parameters = _ca.getParameters();
+						//设置格式
+						parameters.setPictureFormat(ImageFormat.JPEG);
+						//设置预览大小，这里我的测试机是Milsstone所以设置的是854x480
+						for ( android.hardware.Camera.Size sz : parameters.getSupportedPreviewSizes() ) {
+							if ( sz.width == 1280 ) {
+								parameters.setPreviewSize(sz.width, sz.height);
+								break;
+							}
+						}
+						
+						//设置自动对焦
+						parameters.setFocusMode("auto");
+						//设置图片保存时的分辨率大小
+						for ( android.hardware.Camera.Size sz : parameters.getSupportedPictureSizes() ) {
+							parameters.setPictureSize(sz.width, sz.height);
+							break;
+						}
+						
+						try {
+							//给相机对象设置刚才设定的参数
+							_ca.setParameters(parameters);
+							_ca.startPreview();
+							Toast.makeText(Camera.this, "size: "+parameters.getPreviewSize().width+"x"+
+									parameters.getPreviewSize().height+"||"+parameters.getPictureSize().width+"x"+
+									parameters.getPictureSize().height, Toast.LENGTH_LONG).show();
+						} catch ( Exception e ) {
+							Toast.makeText(Camera.this, "exp: "+e.toString(), Toast.LENGTH_LONG).show();
+						}
+						//开始预览
+					}
+				}
+			});
+			// 设置Push缓冲类型，说明surface数据由其他来源提供，而不是用自己的Canvas来绘图，在这里是由摄像头来提供数据
+			//_holder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+		}
 	}
 }

@@ -45,7 +45,7 @@ public class Yunjian_json extends Activity {
 		
 		((Button)findViewById(R.id.btn_camera)).setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
-				Intent camera_activity = new Intent(Yunjian_json.this, Camera);
+				Intent camera_activity = new Intent(Yunjian_json.this, Camera.class);
 				Yunjian_json.this.startActivity(camera_activity);
 			}
 		});
