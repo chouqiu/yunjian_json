@@ -30,6 +30,7 @@ public class Camera extends Activity {
 	private TextView _tv = null;
 	private SquareView _sv = null;
 	private boolean _add_sv = false;
+	private int _vw = 0, _vh = 0;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -100,6 +101,8 @@ public class Camera extends Activity {
 						for ( android.hardware.Camera.Size sz : parameters.getSupportedPreviewSizes() ) {
 							if ( sz.width == 1280 ) {
 								parameters.setPreviewSize(sz.width, sz.height);
+								_vw = sz.width;
+								_vh = sz.height;
 								break;
 							}
 						}
@@ -139,17 +142,21 @@ public class Camera extends Activity {
 									}
 									
 									Rect r = faces[0].rect;
-									Matrix m = new Matrix();
-									m.setValues(new float[]{r.top,r.left,r.bottom,r.right});
-									//m.postRotate(90);
-									m.postScale(_cv.getWidth()/2000f, _cv.getHeight()/2000f);
-									m.postTranslate(_cv.getWidth()/2f, _cv.getHeight()/2f);
+									Rect rr = new Rect(r);
+									_vh = _cv.getHeight();
+									_vw = _cv.getWidth();
+									r.top = (int) ((r.top+1000f)/2000f*_vh);
+									r.bottom = (int) ((r.bottom+1000f)/2000f*_vh);
+									r.left = _vw-(int) ((r.left+1000f)/2000f*_vw);
+									r.right = _vw-(int) ((r.right+1000f)/2000f*_vw);
 									
 									_tv.setTextColor(Color.argb(155, 255, 255, 255));
 									_tv.setTextSize(20);
-									_tv.setText("姓名：王岳\n战斗力：5\n等级：一级\n"+r.left+", "+r.top+", "+r.right+", "+r.bottom);
+									_tv.setText("姓名：王岳\n战斗力：5\n等级：一级\n"+r.left+", "+r.top+", "
+											+r.right+", "+r.bottom+"\n"+rr.left+", "+rr.top+", "
+													+rr.right+", "+rr.bottom);
 									
-									_sv.setMatrix(m);
+									_sv.setMatrix(r);
 									_fl.addView(_sv);
 									_add_sv = true;
 								} else {
@@ -251,13 +258,8 @@ public class Camera extends Activity {
 	        p = new Paint();
 	    }
 	    
-	    public void setMatrix(Matrix m) {
-	    	float[] pts = new float[4];
-	    	m.getValues(pts);
-	    	_r.top = (int) pts[0];
-	    	_r.left = (int) pts[1];
-	    	_r.right = (int) pts[2];
-	    	_r.bottom = (int) pts[3];
+	    public void setMatrix(Rect r) {
+	    	_r = r;
 	    }
 
 	    protected void onDraw(Canvas canvas) {
