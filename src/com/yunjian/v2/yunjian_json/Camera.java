@@ -4,13 +4,14 @@ import java.io.IOException;
 
 import android.app.Activity;
 import android.content.Context;
-import android.content.pm.ActivityInfo;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ImageFormat;
+import android.graphics.Matrix;
+import android.graphics.Paint;
 import android.graphics.PixelFormat;
-import android.hardware.Camera.PictureCallback;
+import android.graphics.Rect;
+import android.hardware.Camera.Face;
 import android.os.Bundle;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -20,13 +21,15 @@ import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.media.FaceDetector;
 
 public class Camera extends Activity {
 	private CameraView _cv;
 	private android.hardware.Camera _ca;
-	private Bitmap _map = null;
+	//private Bitmap _map = null;
 	private FrameLayout _fl = null;
+	private TextView _tv = null;
+	private SquareView _sv = null;
+	private boolean _add_sv = false;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -36,6 +39,8 @@ public class Camera extends Activity {
 		this.requestWindowFeature(Window.FEATURE_NO_TITLE);
 		getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
 		getWindow().setFormat(PixelFormat.TRANSLUCENT);
+		
+		_sv = new SquareView(this);
 		
 		_fl = new FrameLayout(this);
 		_cv = new CameraView(this);
@@ -89,7 +94,8 @@ public class Camera extends Activity {
 						//获得相机参数对象
 						android.hardware.Camera.Parameters parameters = _ca.getParameters();
 						//设置格式
-						parameters.setPictureFormat(ImageFormat.JPEG);
+						//parameters.setPreviewFormat(ImageFormat.RGB_565);
+						parameters.setPictureFormat(ImageFormat.RGB_565);
 						//设置预览大小，这里我的测试机是Milsstone所以设置的是854x480
 						for ( android.hardware.Camera.Size sz : parameters.getSupportedPreviewSizes() ) {
 							if ( sz.width == 1280 ) {
@@ -112,18 +118,74 @@ public class Camera extends Activity {
 						}
 						parameters.setPictureSize(minW, minH);
 						
+						android.hardware.Camera.FaceDetectionListener fl = new android.hardware.Camera.FaceDetectionListener() {
+							@Override
+							public void onFaceDetection(Face[] faces,
+									android.hardware.Camera camera) {
+								// TODO Auto-generated method stub
+								int num = faces.length;	
+								if ( num > 0 ) {
+									Toast.makeText(Camera.this, "get faces: "+num, 
+											Toast.LENGTH_SHORT).show();
+								
+									camera.stopFaceDetection();
+									
+									if ( _tv == null ) {
+										_tv = new TextView(Camera.this);
+										_fl.addView(_tv);
+										_add_sv = true;
+									} else if ( _add_sv == true ) {
+										_fl.removeView(_sv);
+									}
+									
+									Rect r = faces[0].rect;
+									Matrix m = new Matrix();
+									m.setValues(new float[]{r.top,r.left,r.bottom,r.right});
+									//m.postRotate(90);
+									m.postScale(_cv.getWidth()/2000f, _cv.getHeight()/2000f);
+									m.postTranslate(_cv.getWidth()/2f, _cv.getHeight()/2f);
+									
+									_tv.setTextColor(Color.argb(155, 255, 255, 255));
+									_tv.setTextSize(20);
+									_tv.setText("姓名：王岳\n战斗力：5\n等级：一级\n"+r.left+", "+r.top+", "+r.right+", "+r.bottom);
+									
+									_sv.setMatrix(m);
+									_fl.addView(_sv);
+									_add_sv = true;
+								} else {
+									if ( _tv == null ) {
+										_tv = new TextView(Camera.this);
+										_fl.addView(_tv);
+									}
+									
+									if ( _add_sv == true ) {
+										_fl.removeView(_sv);
+										_add_sv = false;
+									}
+									_tv.setTextColor(Color.argb(155, 255, 255, 255));
+									_tv.setTextSize(20);
+									_tv.setText("姓名：未知\n战斗力：未知\n等级：风险大，注意安全！");
+								}
+									
+							}
+						};
+						
 						try {
 							//给相机对象设置刚才设定的参数
 							_ca.setDisplayOrientation(90);
 							_ca.setParameters(parameters);
+							_ca.setFaceDetectionListener(fl);
 							_ca.startPreview();
+							_ca.startFaceDetection();
+							/*
 							_ca.autoFocus( new android.hardware.Camera.AutoFocusCallback() {
 								@Override
 								public void onAutoFocus(boolean success, android.hardware.Camera camera) {
 									// TODO Auto-generated method stub
 									if ( success ) {
-										Toast.makeText(Camera.this, "focus OK!", Toast.LENGTH_SHORT).show();
-										_ca.takePicture(null, null, new PictureCallback() {
+										//Toast.makeText(Camera.this, "focus OK!", Toast.LENGTH_SHORT).show();
+										
+										android.hardware.Camera.PictureCallback pc = new PictureCallback() {
 											@Override
 											public void onPictureTaken(
 													byte[] arg0,
@@ -154,10 +216,14 @@ public class Camera extends Activity {
 													
 												}
 											}
-										});
+										};
+										_ca.takePicture(null, pc, pc);
 									}
 								}
 							});
+							*/
+							
+							
 							
 							Toast.makeText(Camera.this, "size: "+parameters.getPreviewSize().width+"x"+
 									parameters.getPreviewSize().height+"||"+parameters.getPictureSize().width+"x"+
@@ -172,5 +238,53 @@ public class Camera extends Activity {
 			// 设置Push缓冲类型，说明surface数据由其他来源提供，而不是用自己的Canvas来绘图，在这里是由摄像头来提供数据
 			//_holder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
 		}
+	}
+	
+	public class SquareView extends View {
+		private Paint p = null;
+		Rect _r;
+		
+	    //private static final String TAG = "SquareView";
+
+	    public SquareView(Context context) {
+	        super(context);
+	        p = new Paint();
+	    }
+	    
+	    public void setMatrix(Matrix m) {
+	    	float[] pts = new float[4];
+	    	m.getValues(pts);
+	    	_r.top = (int) pts[0];
+	    	_r.left = (int) pts[1];
+	    	_r.right = (int) pts[2];
+	    	_r.bottom = (int) pts[3];
+	    }
+
+	    protected void onDraw(Canvas canvas) {
+	        super.onDraw(canvas);
+	        //Log.d(TAG, "画框");
+	        // 黄色的线
+	        p.setColor(Color.YELLOW);
+	        // 方框
+	        //float w = _w;
+	        //float h = _h;
+	        //if ( w <= 0.0 ) {
+	        //	w = canvas.getWidth();
+	        //	h = canvas.getHeight();
+	        //}
+	        // 上下左右四边
+	        //int margin = 90;
+	        //canvas.drawRect(_r, p);
+	        canvas.drawLine(_r.left, _r.top, _r.right, _r.top, p);
+	        canvas.drawLine(_r.right, _r.top, _r.right, _r.bottom, p);
+	        canvas.drawLine(_r.left, _r.bottom, _r.right, _r.bottom, p);
+	        canvas.drawLine(_r.left, _r.top, _r.left, _r.bottom, p);
+	        /*
+	        canvas.drawLine(margin, margin, w - margin, margin, p);
+	        canvas.drawLine(margin, h - margin, w - margin, h - margin, p);
+	        canvas.drawLine(margin, margin, margin, h - margin, p);
+	        canvas.drawLine(w - margin, margin, w - margin, h - margin, p);
+	        */
+	    }
 	}
 }
