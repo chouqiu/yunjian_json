@@ -7,7 +7,6 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ImageFormat;
-import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.PixelFormat;
 import android.graphics.Rect;
@@ -80,6 +79,7 @@ public class Camera extends Activity {
 						//设置预览
 						_ca.setPreviewDisplay(_holder);
 					} catch (IOException e) {
+						_ca.stopFaceDetection();
 						// 释放相机资源并置空
 						_ca.release();
 						_ca = null;
@@ -131,7 +131,7 @@ public class Camera extends Activity {
 									Toast.makeText(Camera.this, "get faces: "+num, 
 											Toast.LENGTH_SHORT).show();
 								
-									camera.stopFaceDetection();
+									//camera.stopFaceDetection();
 									
 									if ( _tv == null ) {
 										_tv = new TextView(Camera.this);
@@ -145,16 +145,16 @@ public class Camera extends Activity {
 									Rect rr = new Rect(r);
 									_vh = _cv.getHeight();
 									_vw = _cv.getWidth();
-									r.top = (int) ((r.top+1000f)/2000f*_vh);
-									r.bottom = (int) ((r.bottom+1000f)/2000f*_vh);
-									r.left = _vw-(int) ((r.left+1000f)/2000f*_vw);
-									r.right = _vw-(int) ((r.right+1000f)/2000f*_vw);
+									r.top = _vw-(int) ((r.top+1000f)/2000f*_vw);
+									r.bottom = _vw-(int) ((r.bottom+1000f)/2000f*_vw);
+									r.left = (int) ((r.left+1000f)/2000f*_vh);
+									r.right = (int) ((r.right+1000f)/2000f*_vh);
 									
 									_tv.setTextColor(Color.argb(155, 255, 255, 255));
 									_tv.setTextSize(20);
 									_tv.setText("姓名：王岳\n战斗力：5\n等级：一级\n"+r.left+", "+r.top+", "
 											+r.right+", "+r.bottom+"\n"+rr.left+", "+rr.top+", "
-													+rr.right+", "+rr.bottom);
+													+rr.right+", "+rr.bottom+"\nvw: "+_vw+", "+_vh);
 									
 									_sv.setMatrix(r);
 									_fl.addView(_sv);
@@ -277,10 +277,10 @@ public class Camera extends Activity {
 	        // 上下左右四边
 	        //int margin = 90;
 	        //canvas.drawRect(_r, p);
-	        canvas.drawLine(_r.left, _r.top, _r.right, _r.top, p);
-	        canvas.drawLine(_r.right, _r.top, _r.right, _r.bottom, p);
-	        canvas.drawLine(_r.left, _r.bottom, _r.right, _r.bottom, p);
-	        canvas.drawLine(_r.left, _r.top, _r.left, _r.bottom, p);
+	        canvas.drawLine(_r.top, _r.left, _r.top, _r.right, p);
+	        canvas.drawLine(_r.top, _r.right, _r.bottom, _r.right, p);
+	        canvas.drawLine(_r.bottom, _r.left, _r.bottom, _r.right, p);
+	        canvas.drawLine(_r.top, _r.left, _r.bottom, _r.left, p);
 	        /*
 	        canvas.drawLine(margin, margin, w - margin, margin, p);
 	        canvas.drawLine(margin, h - margin, w - margin, h - margin, p);
