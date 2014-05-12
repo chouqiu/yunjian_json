@@ -127,8 +127,8 @@ public class Camera extends Activity {
 								// TODO Auto-generated method stub
 								int num = faces.length;	
 								if ( num > 0 ) {
-									Toast.makeText(Camera.this, "get faces: "+num, 
-											Toast.LENGTH_SHORT).show();
+									//Toast.makeText(Camera.this, "get faces: "+num, 
+									//		Toast.LENGTH_SHORT).show();
 								
 									//camera.stopFaceDetection();
 									
