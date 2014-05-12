@@ -59,7 +59,6 @@ public class Camera extends Activity {
 			_holder = this.getHolder();
 			// 创建SurfaceHolder.Callback对象
 			_holder.addCallback(new SurfaceHolder.Callback() {
-
 				@Override
 				public void surfaceDestroyed(SurfaceHolder holder) {
 					if ( _ca != null ) {
