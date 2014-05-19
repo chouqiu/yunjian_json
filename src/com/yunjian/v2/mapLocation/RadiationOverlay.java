@@ -60,4 +60,8 @@ public class RadiationOverlay extends ItemizedOverlay<OverlayItem> {
 		return it;
 	}
 	
+	public void DelOverlayItem(OverlayItem it) {
+		this.removeItem(it);
+		mV.refresh();
+	}
 }

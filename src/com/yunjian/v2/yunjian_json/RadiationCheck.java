@@ -57,7 +57,13 @@ public class RadiationCheck {
 		sm=(SensorManager)activity.getSystemService(Context.SENSOR_SERVICE);
 		mSensor=sm.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
 		aSensor = sm.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-		
+	}
+	
+	public void unRegisterDevice() {
+		sm.unregisterListener(myListener);
+	}
+	
+	public void registerDevice() {
 		sm.registerListener(myListener, mSensor, SensorManager.SENSOR_DELAY_GAME);
 		sm.registerListener(myListener, aSensor, SensorManager.SENSOR_DELAY_GAME);
 	}

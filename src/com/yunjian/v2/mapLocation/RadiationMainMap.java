@@ -52,9 +52,9 @@ public class RadiationMainMap extends Activity implements BDLocationListener {
 	 */
 	public String mTime;
 	public int mType;
-	public double mLat;
-	public double mLon;
-	public double mRad;
+	public double mLat = 0f;
+	public double mLon = 0f;
+	public double mRad = 0f;
 	public double mSpeed = 0f;
 	public int mNumSat = 0;
 	public String mAddr = "";
@@ -73,11 +73,6 @@ public class RadiationMainMap extends Activity implements BDLocationListener {
 	RadOverlayInterface mRadListener = null;
 	GeoPoint mTapPoint = null;
 	OverlayItem mTapItem = null;
-	
-	/**
-	 * 数据上报类
-	 */
-	ReportRadLocation mReport = null;
 	
 	/**
 	 *  MKMapViewListener 用于处理地图事件回调
@@ -130,22 +125,29 @@ public class RadiationMainMap extends Activity implements BDLocationListener {
         option.setIsNeedAddress(true);//返回的定位结果包含地址信息
         option.setNeedDeviceDirect(true);//返回的定位结果包含手机机头的方向
         mLocationClient.setLocOption(option);
+        // 启动定位服务
+        mLocationClient.start();
         
         // 设置陀螺仪告警监听
         mAlarmListener = new RadiationAlarmListener() {
-
+        	private int mv_cnt = 0;
+        	
 			@Override
 			public void onMove(double x, double y, double z) {
 				// 提示移动中
-				Toast.makeText(RadiationMainMap.this, "请尽量保持手机静止", Toast.LENGTH_SHORT).show();
+				if ( mv_cnt == 0 ) {
+					Toast.makeText(RadiationMainMap.this, "请尽量保持手机静止", Toast.LENGTH_SHORT).show();
+				}
+				mv_cnt = (mv_cnt+1) % 10;
 			}
 
 			@Override
 			public void onAlarm(double x, double y, double z) {
 				// 插入Overlay标志，并上报GeoPoint和当前辐射最大值
 				mRadOverlay.AddOverlayItem(BMapUtil.genGeoPoint(mLat, mLon), "辐射点", "辐射点信息", null);
-				mReport.setReportParam(mLat, mLon, x, y, z, ReportRadLocation.TYPE_MF);
-				mReport.go();
+				ReportRadLocation r = new ReportRadLocation(RadiationMainMap.this.getApplicationContext());
+				r.setReportParam(mLat, mLon, x, y, z, ReportRadLocation.TYPE_MF);
+				r.go();
 			}
         };
         mAlarmCheck = new RadiationCheck(mAlarmListener, this);
@@ -167,6 +169,7 @@ public class RadiationMainMap extends Activity implements BDLocationListener {
 				// 确认是否手工上报
 				mTapItem = mRadOverlay.AddOverlayItem(p, "手动添加", "手动添加辐射点", RadiationMainMap.this.getResources().getDrawable(R.drawable.icon_gcoding));
 				mTapPoint = p;
+				RadiationMainMap.this.setLocationCenter(p, null);
 				
 				AlertDialog.Builder builder = new Builder(RadiationMainMap.this);
 				builder.setMessage("确认手工添加辐射点？");
@@ -177,8 +180,9 @@ public class RadiationMainMap extends Activity implements BDLocationListener {
 						if ( mTapPoint != null ) {
 							if ( mTapItem != null ) mRadOverlay.removeItem(mTapItem);
 							mRadOverlay.AddOverlayItem(mTapPoint, "辐射点", "辐射点信息", null);
-							mReport.setReportParam(mTapPoint.getLatitudeE6()/1E6, mTapPoint.getLongitudeE6()/1E6, 0f, 0f, 0f, ReportRadLocation.TYPE_MF);
-							mReport.go();
+							ReportRadLocation r = new ReportRadLocation(RadiationMainMap.this.getApplicationContext());
+							r.setReportParam(mTapPoint.getLatitudeE6()/1E6, mTapPoint.getLongitudeE6()/1E6, 0f, 0f, 0f, ReportRadLocation.TYPE_MF);
+							r.go();
 						}
 						
 						arg0.dismiss();
@@ -188,6 +192,9 @@ public class RadiationMainMap extends Activity implements BDLocationListener {
 				builder.setNegativeButton("取消", new OnClickListener() {
 					@Override
 					public void onClick(DialogInterface dialog, int which) {
+						if ( mTapItem != null )
+							mRadOverlay.DelOverlayItem(mTapItem);
+						
 						dialog.dismiss();
 					}
 				});
@@ -199,11 +206,6 @@ public class RadiationMainMap extends Activity implements BDLocationListener {
         mRadOverlay.registerTapListener(mRadListener);
         mMapView.getOverlays().clear();  
         mMapView.getOverlays().add(mRadOverlay);  
-        
-        /**
-         * 初始化数据上报类
-         */
-        mReport = new ReportRadLocation(this.getApplicationContext());
        
         /**
          * 将地图移动至指定点
@@ -276,6 +278,7 @@ public class RadiationMainMap extends Activity implements BDLocationListener {
     	 *  MapView的生命周期与Activity同步，当activity挂起时需调用MapView.onPause()
     	 */
         mMapView.onPause();
+        mAlarmCheck.unRegisterDevice();
         super.onPause();
     }
     
@@ -285,10 +288,17 @@ public class RadiationMainMap extends Activity implements BDLocationListener {
     	 *  MapView的生命周期与Activity同步，当activity恢复时需调用MapView.onResume()
     	 */
         mMapView.onResume();
+        
+        int reqret = 0;
         if (mLocationClient != null && mLocationClient.isStarted())
-        	  mLocationClient.requestLocation();
+        	  reqret = mLocationClient.requestLocation();
         else 
         	 Log.d("LocSDK3", "locClient is null or not started");
+        
+        if ( reqret != 0 ) {
+        	Log.d("LocSDK3", "locClient req failed: "+reqret);
+        }
+        mAlarmCheck.registerDevice();
         
         super.onResume();
     }
@@ -319,7 +329,8 @@ public class RadiationMainMap extends Activity implements BDLocationListener {
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// 添加测试菜单
 		super.onCreateOptionsMenu(menu);
-		menu.add("Debug页面");
+		menu.add(0, 1, 1, "Debug页面");
+		menu.add(0, 2, 1, "定位当前位置");
 		return true;
 	}
 
@@ -330,6 +341,9 @@ public class RadiationMainMap extends Activity implements BDLocationListener {
 		case 1:
 			Intent old_activity = new Intent(RadiationMainMap.this, Yunjian_json.class);
 			this.startActivity(old_activity);
+			break;
+		case 2:
+			setLocationCenter(mLat, mLon, null);
 			break;
 		default:
 			return super.onOptionsItemSelected(item);
@@ -350,8 +364,15 @@ public class RadiationMainMap extends Activity implements BDLocationListener {
         	 p = BMapUtil.genGeoPoint(lat, lon);
         }
         
-        con.setCenter(p);
+        setLocationCenter(p, con);
     }
+	
+	private void setLocationCenter(GeoPoint p, MapController con) {
+		if ( con == null )
+			mMapController.setCenter(p);
+		else
+			con.setCenter(p);
+	}
 
 	@Override
 	public void onReceiveLocation(BDLocation arg0) {
@@ -359,6 +380,10 @@ public class RadiationMainMap extends Activity implements BDLocationListener {
 		if ( arg0 == null ) {
 			return;
 		}
+		boolean bCenterflag = false;
+		
+		if ( mLat == 0f && mLon == 0f )
+			bCenterflag = true;
 		
 		mTime = arg0.getTime();
 		mType = arg0.getLocType();
@@ -376,7 +401,8 @@ public class RadiationMainMap extends Activity implements BDLocationListener {
 			mAddr = arg0.getAddrStr();
 		}
 		
-		setLocationCenter(mLat, mLon, mMapController);
+		if ( bCenterflag )
+			setLocationCenter(mLat, mLon, null);
 	}
 
 	@Override

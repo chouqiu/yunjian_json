@@ -63,6 +63,7 @@ public class Yunjian_json extends Activity {
 	private double accDiff = 0.0f;
 	
 	private AlarmBeep alarmbeep;
+	private BroadcastReceiver mBR = null;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -238,18 +239,20 @@ public class Yunjian_json extends Activity {
 	        }
 		};
 		
-		registerReceiver(new BatteryReceiver(), new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+		mBR = new BatteryReceiver();
+		
 		sm=(SensorManager)getSystemService(Context.SENSOR_SERVICE);
 		mSensor=sm.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
 		aSensor = sm.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-		
-		sm.registerListener(myListener, mSensor, SensorManager.SENSOR_DELAY_GAME);
-		sm.registerListener(myListener, aSensor, SensorManager.SENSOR_DELAY_GAME);
 	}
 	
 	@Override
 	protected void onResume() {
 		super.onResume();
+		
+		registerReceiver(mBR, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+		sm.registerListener(myListener, mSensor, SensorManager.SENSOR_DELAY_GAME);
+		sm.registerListener(myListener, aSensor, SensorManager.SENSOR_DELAY_GAME);
 		/*
 		GetJson proc = new GetJson();
 		proc.initHeaders("Content-Type", "application/json");
@@ -279,7 +282,8 @@ public class Yunjian_json extends Activity {
 	//注意activity暂停的时候释放   
     protected void onPause() {      
         super.onPause();    
-        sm.unregisterListener(myListener);    
+        sm.unregisterListener(myListener);
+        this.unregisterReceiver(mBR);
     }
 
 	@Override

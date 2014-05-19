@@ -112,7 +112,7 @@ public class JsonHelper {
 		}
 	}
 	
-	public String toJson() {
+	public String toString() {
 		if ( mObj != null ) {
 			return mObj.toString();
 		} else {
