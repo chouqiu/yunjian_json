@@ -23,7 +23,7 @@ public class RadiationOverlay extends ItemizedOverlay<OverlayItem> {
 	protected boolean onTap(int arg0) {
 		// 显示辐射最大值
 		if ( mTapListener != null ) {
-			mTapListener.onTapRadPoint(arg0);
+			mTapListener.onTapRadPoint(arg0, this.getItem(arg0));
 		}
 		return true;
 		//return super.onTap(arg0);

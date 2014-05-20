@@ -54,7 +54,7 @@ public class ReportRadLocation extends PostTask {
 	@Override
 	protected String getApiUrl() {
 		// 返回上报链接
-		return "http://183.60.118.96/monitor/mon2.cgi";
+		return "http://183.60.118.96/monitor/monR.cgi";
 	}
 
 	@Override

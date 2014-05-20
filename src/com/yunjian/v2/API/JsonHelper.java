@@ -69,6 +69,18 @@ public class JsonHelper {
 			return -1f;
 		}
 	}
+	
+	public static JSONArray getArray(JSONObject o, String k)
+	{
+		if (o == null)
+			return null;
+		
+		try {
+			return o.getJSONArray(k);
+		} catch (JSONException e) {
+			return null;
+		}
+	}
 
 	public void setString(String k, String v) {
 		if ( mObj == null ) mObj = new JSONObject();

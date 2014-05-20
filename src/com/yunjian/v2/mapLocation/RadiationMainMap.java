@@ -1,16 +1,22 @@
 package com.yunjian.v2.mapLocation;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.Toast;
 
 import com.baidu.mapapi.BMapManager;
@@ -19,6 +25,8 @@ import com.baidu.mapapi.map.MapController;
 import com.baidu.mapapi.map.MapPoi;
 import com.baidu.mapapi.map.MapView;
 import com.baidu.mapapi.map.OverlayItem;
+import com.baidu.mapapi.map.PopupOverlay;
+import com.baidu.mapapi.map.PopupClickListener;
 import com.baidu.platform.comapi.basestruct.GeoPoint;
 
 import com.baidu.location.BDLocation;
@@ -35,7 +43,7 @@ import com.yunjian.v2.yunjian_json.Yunjian_json;
 /**
  * 演示MapView的基本用法
  */
-public class RadiationMainMap extends Activity implements BDLocationListener {
+public class RadiationMainMap extends Activity implements BDLocationListener,GetRadiationListener {
 
 	final static String TAG = "MainActivity";
 	/**
@@ -73,6 +81,7 @@ public class RadiationMainMap extends Activity implements BDLocationListener {
 	RadOverlayInterface mRadListener = null;
 	GeoPoint mTapPoint = null;
 	OverlayItem mTapItem = null;
+	GetRadiationList mGetlist = null;
 	
 	/**
 	 *  MKMapViewListener 用于处理地图事件回调
@@ -114,6 +123,11 @@ public class RadiationMainMap extends Activity implements BDLocationListener {
         mMapController.setZoom(12);
         
         /**
+         * 初始化辐射点列表拉取类
+         */
+        mGetlist = new GetRadiationList(this);
+        
+        /**
          * 设置定位监听功能
          */
         mLocationClient = new LocationClient(this.getApplicationContext());
@@ -136,13 +150,14 @@ public class RadiationMainMap extends Activity implements BDLocationListener {
 			public void onMove(double x, double y, double z) {
 				// 提示移动中
 				if ( mv_cnt == 0 ) {
-					Toast.makeText(RadiationMainMap.this, "请尽量保持手机静止", Toast.LENGTH_SHORT).show();
+					//Toast.makeText(RadiationMainMap.this, "请尽量保持手机静止", Toast.LENGTH_SHORT).show();
 				}
 				mv_cnt = (mv_cnt+1) % 10;
 			}
 
 			@Override
 			public void onAlarm(double x, double y, double z) {
+				setLocationCenter(mLat, mLon, null);
 				// 插入Overlay标志，并上报GeoPoint和当前辐射最大值
 				mRadOverlay.AddOverlayItem(BMapUtil.genGeoPoint(mLat, mLon), "辐射点", "辐射点信息", null);
 				ReportRadLocation r = new ReportRadLocation(RadiationMainMap.this.getApplicationContext());
@@ -157,11 +172,19 @@ public class RadiationMainMap extends Activity implements BDLocationListener {
          */
         mRadOverlay = new RadiationOverlay(this.getResources().getDrawable(R.drawable.icon_geo), mMapView);
         mRadListener = new RadOverlayInterface() {
-
+        	private PopupOverlay pop = new PopupOverlay(mMapView, new PopupClickListener() {
+				@Override
+				public void onClickedPopup(int arg0) {
+					// 暂时不做什么
+				}
+        	});
+        	private View popView = ((LayoutInflater)RadiationMainMap.this.
+        			getSystemService(Context.LAYOUT_INFLATER_SERVICE)).
+        			inflate(R.layout.activity_yunjian_json, null);
 			@Override
-			public void onTapRadPoint(int idx) {
-				// TODO 显示辐射最大值，最后上报时间，上报人数
-				
+			public void onTapRadPoint(int idx, OverlayItem it) {
+				// 显示辐射最大值，最后上报时间，上报人数
+				pop.showPopup(popView, it.getPoint(), 2);
 			}
 
 			@Override
@@ -213,7 +236,7 @@ public class RadiationMainMap extends Activity implements BDLocationListener {
          * 如果需要在百度地图上显示使用其他坐标系统的位置，请发邮件至mapapi@baidu.com申请坐标转换接口
          * 默认天安门
          */
-        setLocationCenter(39.945, 116.404, mMapController);
+        setLocationCenter(39.945, 116.404, null);
         
         
         /**
@@ -257,6 +280,8 @@ public class RadiationMainMap extends Activity implements BDLocationListener {
 				/**
 				 *  地图完成带动画的操作（如: animationTo()）后，此回调被触发
 				 */
+				// 拉取辐射点列表
+				mGetlist.getList(mMapView.getMapCenter());
 			}
             /**
              * 在此处理地图载完成事件 
@@ -369,9 +394,11 @@ public class RadiationMainMap extends Activity implements BDLocationListener {
 	
 	private void setLocationCenter(GeoPoint p, MapController con) {
 		if ( con == null )
-			mMapController.setCenter(p);
+			//mMapController.setCenter(p);
+			mMapController.animateTo(p);
 		else
-			con.setCenter(p);
+			//con.setCenter(p);
+			con.animateTo(p);
 	}
 
 	@Override
@@ -409,6 +436,16 @@ public class RadiationMainMap extends Activity implements BDLocationListener {
 	public void onReceivePoi(BDLocation arg0) {
 		// 下个版本sdk即将取消
 		
+	}
+
+	@Override
+	public void onGetList(ArrayList<RadPoint> arr) {
+		// 在图上画点
+		Iterator<RadPoint> it = arr.iterator();
+		while ( it.hasNext() ) {
+			RadPoint p = it.next();
+			mRadOverlay.AddOverlayItem(BMapUtil.genGeoPoint(p.lat, p.lon), "辐射点", "辐射点信息", null);
+		}
 	}
     
 }
