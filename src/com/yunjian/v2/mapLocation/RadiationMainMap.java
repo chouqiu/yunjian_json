@@ -440,6 +440,7 @@ public class RadiationMainMap extends Activity implements BDLocationListener,Get
 
 	@Override
 	public void onGetList(ArrayList<RadPoint> arr) {
+		mRadOverlay.clearOverlayItems();
 		// 在图上画点
 		Iterator<RadPoint> it = arr.iterator();
 		while ( it.hasNext() ) {

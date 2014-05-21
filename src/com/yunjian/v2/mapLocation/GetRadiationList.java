@@ -33,7 +33,8 @@ public class GetRadiationList implements TaskListener {
 	public void onGetList(String json) {
 		//{list:[{lasttime:443434,lat:23.332,lon:44.342,maxval:65,report_count:8}],reqtime:234234}
 		try {
-			JSONObject lst = new JSONObject(json);
+			String rst = JsonHelper.getString(new JSONObject(json), "errorMsg");
+			JSONObject lst = new JSONObject(rst);
 			JSONArray arr = JsonHelper.getArray(lst, "list");
 			long tm = JsonHelper.getLong(lst, "reqtime");
 			
