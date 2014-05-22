@@ -4,5 +4,8 @@
     <string name="app_name">Yunjian_json</string>
     <string name="hello_world"></string>
     <string name="menu_settings">Settings</string>
+    <string name="title_activity_personal_main">PersonalMain</string>
+    <string name="dummy_button">Dummy Button</string>
+    <string name="dummy_content">DUMMY\nCONTENT</string>
 
 </resources>

@@ -39,7 +39,7 @@ public class RadiationOverlay extends ItemizedOverlay<OverlayItem> {
 			mTapListener.onTapMapView(arg0);
 		}
 	  
-		return true;
+		return false;
 	}
 	
 	public void registerTapListener( RadOverlayInterface tap ) {
@@ -66,6 +66,6 @@ public class RadiationOverlay extends ItemizedOverlay<OverlayItem> {
 	}
 	
 	public void clearOverlayItems() {
-		this.clearOverlayItems();
+		this.removeAll();
 	}
 }

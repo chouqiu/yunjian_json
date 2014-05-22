@@ -17,6 +17,7 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
 import android.widget.Toast;
 
 import com.baidu.mapapi.BMapManager;
@@ -35,6 +36,7 @@ import com.baidu.location.LocationClient;
 import com.baidu.location.LocationClientOption;
 import com.baidu.location.LocationClientOption.LocationMode;
 
+import com.yunjian.v2.yunjian_json.PersonalMain;
 import com.yunjian.v2.yunjian_json.R;
 import com.yunjian.v2.yunjian_json.RadiationAlarmListener;
 import com.yunjian.v2.yunjian_json.RadiationCheck;
@@ -82,7 +84,7 @@ public class RadiationMainMap extends Activity implements BDLocationListener,Get
 	GeoPoint mTapPoint = null;
 	OverlayItem mTapItem = null;
 	GetRadiationList mGetlist = null;
-	
+
 	/**
 	 *  MKMapViewListener 用于处理地图事件回调
 	 */
@@ -126,6 +128,17 @@ public class RadiationMainMap extends Activity implements BDLocationListener,Get
          * 初始化辐射点列表拉取类
          */
         mGetlist = new GetRadiationList(this);
+        
+        /**
+         * 初始化上报button
+         */
+        ((Button) findViewById(R.id.btn_report)).setOnClickListener(new Button.OnClickListener() {  
+            @Override  
+            public void onClick(View v) {  
+            	mRadListener.onTapMapView(BMapUtil.genGeoPoint(mLat, mLon));
+            }
+
+        });
         
         /**
          * 设置定位监听功能
@@ -190,9 +203,11 @@ public class RadiationMainMap extends Activity implements BDLocationListener,Get
 			@Override
 			public void onTapMapView(GeoPoint p) {
 				// 确认是否手工上报
-				mTapItem = mRadOverlay.AddOverlayItem(p, "手动添加", "手动添加辐射点", RadiationMainMap.this.getResources().getDrawable(R.drawable.icon_gcoding));
+				//mTapItem = mRadOverlay.AddOverlayItem(p, "手动添加", "手动添加辐射点", RadiationMainMap.this.getResources().getDrawable(R.drawable.icon_gcoding));
 				mTapPoint = p;
-				RadiationMainMap.this.setLocationCenter(p, null);
+				
+				// 这里移动后会清除所有item，与下面的removeItem冲突，暂时先去掉
+				//RadiationMainMap.this.setLocationCenter(p, null);
 				
 				AlertDialog.Builder builder = new Builder(RadiationMainMap.this);
 				builder.setMessage("确认手工添加辐射点？");
@@ -201,7 +216,7 @@ public class RadiationMainMap extends Activity implements BDLocationListener,Get
 					@Override
 					public void onClick(DialogInterface arg0, int arg1) {		
 						if ( mTapPoint != null ) {
-							if ( mTapItem != null ) mRadOverlay.removeItem(mTapItem);
+							//if ( mTapItem != null ) mRadOverlay.removeItem(mTapItem);
 							mRadOverlay.AddOverlayItem(mTapPoint, "辐射点", "辐射点信息", null);
 							ReportRadLocation r = new ReportRadLocation(RadiationMainMap.this.getApplicationContext());
 							r.setReportParam(mTapPoint.getLatitudeE6()/1E6, mTapPoint.getLongitudeE6()/1E6, 0f, 0f, 0f, ReportRadLocation.TYPE_MF);
@@ -356,6 +371,7 @@ public class RadiationMainMap extends Activity implements BDLocationListener,Get
 		super.onCreateOptionsMenu(menu);
 		menu.add(0, 1, 1, "Debug页面");
 		menu.add(0, 2, 1, "定位当前位置");
+		menu.add(0, 3, 1, "测试页面");
 		return true;
 	}
 
@@ -369,6 +385,10 @@ public class RadiationMainMap extends Activity implements BDLocationListener,Get
 			break;
 		case 2:
 			setLocationCenter(mLat, mLon, null);
+			break;
+		case 3:
+			Intent testActivity = new Intent(RadiationMainMap.this, PersonalMain.class);
+			this.startActivity(testActivity);
 			break;
 		default:
 			return super.onOptionsItemSelected(item);
