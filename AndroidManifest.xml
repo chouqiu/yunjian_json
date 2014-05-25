@@ -74,11 +74,6 @@
             android:name="com.yunjian.v2.mapLocation.RadiationMainMap"
             android:configChanges="orientation|keyboardHidden"
             android:screenOrientation="sensor" >
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
         </activity>
 
         <service
@@ -87,9 +82,10 @@
             android:process=":remote" >
         </service>
 
+        <!-- LNsUcKwnHGCXGt53QAtrvWHz -->
         <meta-data
             android:name="com.baidu.lbsapi.API_KEY"
-            android:value="LNsUcKwnHGCXGt53QAtrvWHz" >
+            android:value="3dGhAWOxc5WwwDDsHngLe5fk" >
         </meta-data>
 
         <activity
@@ -97,6 +93,10 @@
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:label="@string/title_activity_personal_main"
             android:theme="@style/FullscreenTheme" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
         </activity>
     </application>
 

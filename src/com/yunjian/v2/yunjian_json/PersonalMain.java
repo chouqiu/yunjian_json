@@ -1,14 +1,27 @@
 package com.yunjian.v2.yunjian_json;
 
+import com.baidu.location.BDLocation;
+import com.baidu.location.BDLocationListener;
+import com.baidu.location.LocationClient;
+import com.baidu.location.LocationClientOption;
+import com.baidu.location.LocationClientOption.LocationMode;
+import com.yunjian.v2.mapLocation.RadiationMainMap;
+import com.yunjian.v2.mapLocation.ReportRadLocation;
 import com.yunjian.v2.yunjian_json.util.SystemUiHider;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.View.OnClickListener;
+import android.widget.Button;
+import android.widget.RatingBar;
+import android.widget.TextView;
 
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.
@@ -16,7 +29,7 @@ import android.view.View;
  * 
  * @see SystemUiHider
  */
-public class PersonalMain extends Activity {
+public class PersonalMain extends Activity implements BDLocationListener {
 	/**
 	 * Whether or not the system UI should be auto-hidden after
 	 * {@link #AUTO_HIDE_DELAY_MILLIS} milliseconds.
@@ -44,6 +57,29 @@ public class PersonalMain extends Activity {
 	 * The instance of the {@link SystemUiHider} for this activity.
 	 */
 	private SystemUiHider mSystemUiHider;
+	
+	/**
+	 * 辐射监控组件
+	 */
+	private RadiationCheck mAlarmCheck = null;
+	private RadiationAlarmListener mAlarmListener = null;
+	
+ 	private RatingBar mRb = null;
+ 	private TextView mTrb = null;
+ 	private TextView mInfo = null;
+ 	
+ 	/**
+	 * 定位功能
+	 */
+	public String mTime;
+	public int mType;
+	public double mLat = 0f;
+	public double mLon = 0f;
+	public double mRad = 0f;
+	public double mSpeed = 0f;
+	public int mNumSat = 0;
+	public String mAddr = "";
+	private LocationClient mLocationClient = null;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -114,9 +150,85 @@ public class PersonalMain extends Activity {
 		// Upon interacting with UI controls, delay any scheduled hide()
 		// operations to prevent the jarring behavior of controls going away
 		// while interacting with the UI.
-		findViewById(R.id.btn_find).setOnTouchListener(
-				mDelayHideTouchListener);
+		//findViewById(R.id.btn_find).setOnTouchListener(
+			//	mDelayHideTouchListener);
+		Button mb = (Button)findViewById(R.id.btn_find);
+		mb.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				// 切换到导航页
+				Intent mapint = new Intent(PersonalMain.this, RadiationMainMap.class);
+				startActivity(mapint);
+			}	
+		});
+		
+		mRb = (RatingBar)findViewById(R.id.rad_rate);
+		mRb.setIsIndicator(true);
+		mRb.setStepSize(1);
+		mTrb = (TextView)findViewById(R.id.rad_info);
+		mInfo = (TextView)controlsView;
+		
+		// 初始化辐射监控组件
+		mAlarmListener = new RadiationAlarmListener() {
+        	//private int mv_cnt = 0;
+        	
+			@Override
+			public void onMove(double x, double y, double z) {
+				// 提示移动中
+			}
 
+			@Override
+			public void onAlarm(double x, double y, double z) {
+				// 根据强度显示星星
+				double max_avg = x>y ? x : y;
+				max_avg = max_avg>z ? max_avg : z;
+				
+				int delayval = 0;
+				
+				if ( max_avg <= 1.5 ) {
+					mRb.setRating(3.0f);
+					mTrb.setText("小心");
+					mInfo.setText("附近有辐射源，请小心");
+					delayval = 3000;
+				} else if ( max_avg <= 5 ) {
+					mRb.setRating(4.0f);
+					mTrb.setText("危险");
+					mInfo.setText("附近辐射较强，请远离");
+					delayval = 8000;
+				} else {
+					mRb.setRating(5.0f);
+					mTrb.setText("严重");
+					mInfo.setText("附近辐射严重，速走");
+					delayval = 13000;
+				}
+				
+				// 上报告警
+				if ( mLat != 0f || mLon != 0f ) {
+					ReportRadLocation r = new ReportRadLocation(PersonalMain.this.getApplicationContext());
+					r.setReportParam(mLat, mLon, x, y, z, ReportRadLocation.TYPE_MF);
+					r.go();
+				}
+				
+				delayedHide(delayval);
+				mSystemUiHider.show();
+			}
+        };
+        mAlarmCheck = new RadiationCheck(mAlarmListener, this);
+        
+        /**
+         * 设置定位监听功能
+         */
+        mLocationClient = new LocationClient(this.getApplicationContext());
+        mLocationClient.registerLocationListener(this);
+        LocationClientOption option = new LocationClientOption();
+        option.setLocationMode(LocationMode.Hight_Accuracy);//设置定位模式
+        option.setCoorType("bd09ll");//返回的定位结果是百度经纬度，默认值gcj02
+        option.setScanSpan(5000);//设置发起定位请求的间隔时间为5000ms
+        option.setIsNeedAddress(true);//返回的定位结果包含地址信息
+        option.setNeedDeviceDirect(true);//返回的定位结果包含手机机头的方向
+        mLocationClient.setLocOption(option);
+        // 启动定位服务
+        mLocationClient.start();
 	}
 
 	@Override
@@ -149,6 +261,7 @@ public class PersonalMain extends Activity {
 		@Override
 		public void run() {
 			mSystemUiHider.hide();
+			resetAlarmStat();
 		}
 	};
 
@@ -160,4 +273,70 @@ public class PersonalMain extends Activity {
 		mHideHandler.removeCallbacks(mHideRunnable);
 		mHideHandler.postDelayed(mHideRunnable, delayMillis);
 	}
+	
+	private void resetAlarmStat() {
+		mRb.setRating(0.0f);
+		mTrb.setText("安全");
+		mInfo.setText("周围安全，请放心");
+	}
+
+	@Override
+	protected void onPause() {
+		// 取消告警
+		mAlarmCheck.unRegisterDevice();
+		super.onPause();
+	}
+
+	@Override
+	protected void onResume() {
+		int reqret = 0;
+        if (mLocationClient != null && mLocationClient.isStarted())
+        	  reqret = mLocationClient.requestLocation();
+        else 
+        	 Log.d("LocSDK3", "locClient is null or not started");
+        
+        if ( reqret != 0 ) {
+        	Log.d("LocSDK3", "locClient req failed: "+reqret);
+        }
+		
+		// 注册告警
+		mAlarmCheck.registerDevice();
+		super.onResume();
+	}
+	
+	@Override
+	public void onReceiveLocation(BDLocation arg0) {
+		// 接收定位消息
+		if ( arg0 == null ) {
+			return;
+		}
+		
+		mTime = arg0.getTime();
+		mType = arg0.getLocType();
+		mLat = arg0.getLatitude();
+		mLon = arg0.getLongitude();
+		mRad = arg0.getRadius();
+		
+		mSpeed = 0f;
+		mNumSat = 0;
+		mAddr = "";
+		if ( mType == BDLocation.TypeGpsLocation ) {
+			mSpeed = arg0.getSpeed();
+			mNumSat = arg0.getSatelliteNumber();
+		}else if ( mType == BDLocation.TypeNetWorkLocation ) {
+			mAddr = arg0.getAddrStr();
+		}
+	}
+
+	@Override
+	public void onReceivePoi(BDLocation arg0) {
+		// 什么不做
+	}
+}
+
+class RadiationAlarmModel {
+
+	public RadiationAlarmModel() {}
+	
+	
 }
