@@ -1,11 +1,5 @@
 package com.yunjian.v2.yunjian_json;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-
 import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
 import org.json.JSONArray;
@@ -333,6 +327,10 @@ public class Yunjian_json extends Activity {
 		}
 	}
 	
+	/**
+	 * 读取sysfs代码，暂时不用。
+	 * @author zhihui
+	 *
 	private class ReadBatteryFile {
 		//private Context _con;
 		
@@ -367,6 +365,7 @@ public class Yunjian_json extends Activity {
 			return outStream.toByteArray();
 		}
 	}
+	*/
 	
 	private class GetJson extends GetInfoTask {
 		@Override
