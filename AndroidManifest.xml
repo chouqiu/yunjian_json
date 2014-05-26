@@ -82,10 +82,11 @@
             android:process=":remote" >
         </service>
 
-        <!-- LNsUcKwnHGCXGt53QAtrvWHz -->
+        <!-- LNsUcKwnHGCXGt53QAtrvWHz
+         3dGhAWOxc5WwwDDsHngLe5fk-->
         <meta-data
             android:name="com.baidu.lbsapi.API_KEY"
-            android:value="3dGhAWOxc5WwwDDsHngLe5fk" >
+            android:value="LNsUcKwnHGCXGt53QAtrvWHz" >
         </meta-data>
 
         <activity

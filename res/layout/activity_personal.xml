@@ -90,12 +90,50 @@
             tools:ignore="UselessParent" >
 
             <Button
-                android:id="@+id/btn_find"
+                android:id="@+id/btn_main"
                 style="?buttonBarButtonStyle"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="发 现" />
+                android:text="主 页" />
+            <Button
+                android:id="@+id/btn_rpt"
+                style="?buttonBarButtonStyle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="上 报" />
+        </LinearLayout>
+        <LinearLayout
+            android:id="@+id/button_controls"
+            style="?buttonBarStyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|center_horizontal"
+            android:background="@color/black_overlay"
+            android:orientation="horizontal"
+            tools:ignore="UselessParent" >
+
+            <ImageButton
+                android:id="@+id/imgbtn_about"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:src="@drawable/custom_loc" />
+
+            <ImageButton
+                android:id="@+id/imgbtn_find"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:src="@drawable/custom_loc" />
+
+            <ImageButton
+                android:id="@+id/imgbtn_conf"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:src="@drawable/custom_loc" />
         </LinearLayout>
 
 </LinearLayout>

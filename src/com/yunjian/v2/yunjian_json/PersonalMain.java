@@ -11,17 +11,22 @@ import com.yunjian.v2.yunjian_json.util.SystemUiHider;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.RatingBar;
 import android.widget.TextView;
+import android.widget.PopupWindow;
+import android.app.ActionBar.LayoutParams; 
 
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.
@@ -80,7 +85,11 @@ public class PersonalMain extends Activity implements BDLocationListener {
 	public int mNumSat = 0;
 	public String mAddr = "";
 	private LocationClient mLocationClient = null;
-
+	
+	private View popView;
+	private PopupWindow popWin;
+	private Button mbr;
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -152,14 +161,33 @@ public class PersonalMain extends Activity implements BDLocationListener {
 		// while interacting with the UI.
 		//findViewById(R.id.btn_find).setOnTouchListener(
 			//	mDelayHideTouchListener);
-		Button mb = (Button)findViewById(R.id.btn_find);
-		mb.setOnClickListener(new OnClickListener() {
+		
+		// 发现
+		((ImageButton)findViewById(R.id.imgbtn_find)).setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
 				// 切换到导航页
 				Intent mapint = new Intent(PersonalMain.this, RadiationMainMap.class);
 				startActivity(mapint);
 			}	
+		});
+		
+		// 上报
+		popView = ((LayoutInflater)PersonalMain.this.
+				getSystemService(Context.LAYOUT_INFLATER_SERVICE)).
+				inflate(R.layout.activity_pop_report, null);
+		popWin = new PopupWindow(popView,LayoutParams.WRAP_CONTENT,LayoutParams.WRAP_CONTENT);
+		mbr = (Button)findViewById(R.id.btn_rpt);
+		mbr.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				// 弹出popwin
+				if ( popWin.isShowing() ) {
+					popWin.showAsDropDown(mbr);
+				} else {
+					popWin.dismiss();
+				}
+			}  
 		});
 		
 		mRb = (RatingBar)findViewById(R.id.rad_rate);
