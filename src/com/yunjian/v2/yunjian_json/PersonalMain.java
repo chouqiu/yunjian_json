@@ -17,6 +17,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -153,6 +154,7 @@ public class PersonalMain extends Activity implements BDLocationListener {
 				} else {
 				//	mSystemUiHider.show();
 				}
+				mSystemUiHider.show();
 			}
 		});
 
@@ -177,13 +179,20 @@ public class PersonalMain extends Activity implements BDLocationListener {
 				getSystemService(Context.LAYOUT_INFLATER_SERVICE)).
 				inflate(R.layout.activity_pop_report, null);
 		popWin = new PopupWindow(popView,LayoutParams.WRAP_CONTENT,LayoutParams.WRAP_CONTENT);
+		//popWin.setTouchable(true);
+		
 		mbr = (Button)findViewById(R.id.btn_rpt);
 		mbr.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
 				// µ¯³öpopwin
-				if ( popWin.isShowing() ) {
-					popWin.showAsDropDown(mbr);
+				if ( ! popWin.isShowing() ) {
+					int[] loc = new int[2];
+					//popWin.showAsDropDown(mbr);
+					//int a = mbr.getLeft();
+					//int b = mbr.getTop();
+					mbr.getLocationInWindow(loc);
+					popWin.showAtLocation(mbr, Gravity.NO_GRAVITY, loc[0]-20, loc[1]-popView.getHeight()-20);
 				} else {
 					popWin.dismiss();
 				}
