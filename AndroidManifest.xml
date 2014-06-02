@@ -82,11 +82,13 @@
             android:process=":remote" >
         </service>
 
-        <!-- LNsUcKwnHGCXGt53QAtrvWHz
-         3dGhAWOxc5WwwDDsHngLe5fk-->
+        <!--
+         LNsUcKwnHGCXGt53QAtrvWHz
+         3dGhAWOxc5WwwDDsHngLe5fk
+        -->
         <meta-data
             android:name="com.baidu.lbsapi.API_KEY"
-            android:value="LNsUcKwnHGCXGt53QAtrvWHz" >
+            android:value="3dGhAWOxc5WwwDDsHngLe5fk" >
         </meta-data>
 
         <activity
@@ -96,8 +98,13 @@
             android:theme="@style/FullscreenTheme" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
+        <activity
+            android:name="com.yunjian.v2.yunjian_json.Settings"
+            android:label="@string/title_activity_settings" >
         </activity>
     </application>
 

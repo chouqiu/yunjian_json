@@ -1,0 +1,48 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" 
+    xmlns:robobunny="http://robobunny.com"
+    android:key="preference_screen">
+
+    <CheckBoxPreference
+        android:defaultValue="true"
+        android:key="moveable"
+        android:summary="@string/pref_description_social_recommendations"
+        android:title="@string/pref_title_social_recommendations" />
+
+    <PreferenceCategory android:title="阈值设置">
+		<com.yunjian.v2.yunjian_json.SeekBarPreference 
+		    android:key="radVal" 
+		    android:title="检测阈值" 
+		    android:summary="设置辐射告警阈值" 
+		    android:defaultValue="9000" 
+		    android:max="30000" 
+		    robobunny:min="5000" 
+		    robobunny:step="1000"
+		    robobunny:unitsLeft="" 
+		    robobunny:unitsRight="" />
+		<com.yunjian.v2.yunjian_json.SeekBarPreference 
+		    android:key="alarmVal" 
+		    android:title="告警阈值" 
+		    android:summary="设置波动告警阈值" 
+		    android:defaultValue="3" 
+		    android:max="10" 
+		    robobunny:min="1" 
+		    robobunny:step="1"
+		    robobunny:unitsLeft="" 
+		    robobunny:unitsRight="" />
+	</PreferenceCategory>
+
+    <!--
+         NOTE: Hide buttons to simplify the UI. Users can touch outside the dialog to
+         dismiss it.
+    -->
+    <!-- NOTE: ListPreference's summary should be set to its value by the activity code. -->
+    <ListPreference
+        android:defaultValue="1"
+        android:entries="@array/pref_example_list_titles"
+        android:entryValues="@array/pref_example_list_values"
+        android:key="magList"
+        android:negativeButtonText="@null"
+        android:positiveButtonText="@null"
+        android:title="@string/pref_title_add_friends_to_messages" />
+
+</PreferenceScreen>

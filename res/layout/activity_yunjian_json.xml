@@ -9,29 +9,37 @@
         android:id="@+id/textView_rst"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="5"
+        android:layout_weight="2"
         android:text="@string/hello_world" />
+
     <TextView
         android:id="@+id/textView_mag"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:scrollbars="vertical"
+        android:singleLine="false"
         android:layout_weight="5"
+        android:maxLines="20"
 	/>
 
+    <LinearLayout 
+	    android:layout_width="match_parent"
+	    android:layout_height="wrap_content"
+	    android:orientation="horizontal"
+	    android:layout_weight="1">
     <Button
         android:id="@+id/btn_showlst"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
         android:layout_gravity="center"
-        android:text="get list" />
+        android:text="清空" />
     
     <Button
         android:id="@+id/btn_camera"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
         android:layout_gravity="center"
-        android:text="Camera" />
+        android:text="起停" />
+    </LinearLayout>
 
 </LinearLayout>

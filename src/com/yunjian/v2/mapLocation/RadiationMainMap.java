@@ -36,6 +36,7 @@ import com.baidu.location.LocationClient;
 import com.baidu.location.LocationClientOption;
 import com.baidu.location.LocationClientOption.LocationMode;
 
+import com.yunjian.v2.API.AlarmBeep;
 import com.yunjian.v2.yunjian_json.PersonalMain;
 import com.yunjian.v2.yunjian_json.R;
 import com.yunjian.v2.yunjian_json.RadiationAlarmListener;
@@ -160,7 +161,7 @@ public class RadiationMainMap extends Activity implements BDLocationListener,Get
         	private int mv_cnt = 0;
         	
 			@Override
-			public void onMove(double x, double y, double z) {
+			public void onMove(double x, double y, double z, AlarmBeep alarm) {
 				// 提示移动中
 				if ( mv_cnt == 0 ) {
 					//Toast.makeText(RadiationMainMap.this, "请尽量保持手机静止", Toast.LENGTH_SHORT).show();
@@ -176,6 +177,13 @@ public class RadiationMainMap extends Activity implements BDLocationListener,Get
 				ReportRadLocation r = new ReportRadLocation(RadiationMainMap.this.getApplicationContext());
 				r.setReportParam(mLat, mLon, x, y, z, ReportRadLocation.TYPE_MF);
 				r.go();
+			}
+
+			@Override
+			public void onRadiationChange(double x, double y, double z, double fangcha, 
+					int isAlarm, AlarmBeep alarm) {
+				// TODO Auto-generated method stub
+				
 			}
         };
         mAlarmCheck = new RadiationCheck(mAlarmListener, this);

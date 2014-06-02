@@ -5,6 +5,7 @@ import com.baidu.location.BDLocationListener;
 import com.baidu.location.LocationClient;
 import com.baidu.location.LocationClientOption;
 import com.baidu.location.LocationClientOption.LocationMode;
+import com.yunjian.v2.API.AlarmBeep;
 import com.yunjian.v2.mapLocation.RadiationMainMap;
 import com.yunjian.v2.mapLocation.ReportRadLocation;
 import com.yunjian.v2.yunjian_json.util.SystemUiHider;
@@ -19,6 +20,8 @@ import android.os.Handler;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -40,7 +43,7 @@ public class PersonalMain extends Activity implements BDLocationListener {
 	 * Whether or not the system UI should be auto-hidden after
 	 * {@link #AUTO_HIDE_DELAY_MILLIS} milliseconds.
 	 */
-	private static final boolean AUTO_HIDE = true;
+	private static final boolean AUTO_HIDE = false;
 
 	/**
 	 * If {@link #AUTO_HIDE} is set, the number of milliseconds to wait after
@@ -52,7 +55,7 @@ public class PersonalMain extends Activity implements BDLocationListener {
 	 * If set, will toggle the system UI visibility upon interaction. Otherwise,
 	 * will show the system UI visibility upon interaction.
 	 */
-	private static final boolean TOGGLE_ON_CLICK = true;
+	private static final boolean TOGGLE_ON_CLICK = false;
 
 	/**
 	 * The flags to pass to {@link SystemUiHider#getInstance}.
@@ -103,7 +106,7 @@ public class PersonalMain extends Activity implements BDLocationListener {
 		// Set up an instance of SystemUiHider to control the system UI for
 		// this activity.
 		mSystemUiHider = SystemUiHider.getInstance(this, contentView,
-				HIDER_FLAGS);
+				0);
 		mSystemUiHider.setup();
 		mSystemUiHider
 				.setOnVisibilityChangeListener(new SystemUiHider.OnVisibilityChangeListener() {
@@ -144,17 +147,21 @@ public class PersonalMain extends Activity implements BDLocationListener {
 						}
 					}
 				});
+		mSystemUiHider.show();
 
 		// Set up the user interaction to manually show or hide the system UI.
 		contentView.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View view) {
-				if (TOGGLE_ON_CLICK) {
-				//	mSystemUiHider.toggle();
+			 	if (TOGGLE_ON_CLICK) {
+					mSystemUiHider.toggle();
 				} else {
-				//	mSystemUiHider.show();
+					mSystemUiHider.show();
 				}
-				mSystemUiHider.show();
+			 	
+			 	if ( popWin.isShowing() ) {
+			 		popWin.dismiss();
+			 	}
 			}
 		});
 
@@ -192,7 +199,7 @@ public class PersonalMain extends Activity implements BDLocationListener {
 					//int a = mbr.getLeft();
 					//int b = mbr.getTop();
 					mbr.getLocationInWindow(loc);
-					popWin.showAtLocation(mbr, Gravity.NO_GRAVITY, loc[0]-20, loc[1]-popView.getHeight()-20);
+					popWin.showAtLocation(mbr, Gravity.NO_GRAVITY, loc[0]-20, loc[1]-popView.getHeight()-100);
 				} else {
 					popWin.dismiss();
 				}
@@ -202,15 +209,14 @@ public class PersonalMain extends Activity implements BDLocationListener {
 		mRb = (RatingBar)findViewById(R.id.rad_rate);
 		mRb.setIsIndicator(true);
 		mRb.setStepSize(1);
-		mTrb = (TextView)findViewById(R.id.rad_info);
+		mTrb = (TextView)findViewById(R.id.title_stat);
 		mInfo = (TextView)controlsView;
 		
 		// 初始化辐射监控组件
 		mAlarmListener = new RadiationAlarmListener() {
         	//private int mv_cnt = 0;
-        	
 			@Override
-			public void onMove(double x, double y, double z) {
+			public void onMove(double x, double y, double z, AlarmBeep alarms) {
 				// 提示移动中
 			}
 
@@ -224,7 +230,7 @@ public class PersonalMain extends Activity implements BDLocationListener {
 				
 				if ( max_avg <= 1.5 ) {
 					mRb.setRating(3.0f);
-					mTrb.setText("小心");
+					//mTrb.setText("小心");
 					mInfo.setText("附近有辐射源，请小心");
 					delayval = 3000;
 				} else if ( max_avg <= 5 ) {
@@ -249,6 +255,14 @@ public class PersonalMain extends Activity implements BDLocationListener {
 				delayedHide(delayval);
 				mSystemUiHider.show();
 			}
+
+			@Override
+			public void onRadiationChange(double x, double y, double z, double fangcha, 
+					int isAlarm, AlarmBeep alarm) {
+				// TODO Auto-generated method stub
+				
+			}
+			
         };
         mAlarmCheck = new RadiationCheck(mAlarmListener, this);
         
@@ -313,8 +327,8 @@ public class PersonalMain extends Activity implements BDLocationListener {
 	
 	private void resetAlarmStat() {
 		mRb.setRating(0.0f);
-		mTrb.setText("安全");
-		mInfo.setText("周围安全，请放心");
+		//mTrb.setText("安全");
+		mInfo.setText("周边安全");
 	}
 
 	@Override
@@ -369,11 +383,35 @@ public class PersonalMain extends Activity implements BDLocationListener {
 	public void onReceivePoi(BDLocation arg0) {
 		// 什么不做
 	}
-}
-
-class RadiationAlarmModel {
-
-	public RadiationAlarmModel() {}
 	
-	
+    @Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		// 添加测试菜单
+		super.onCreateOptionsMenu(menu);
+		menu.add(0, 1, 1, "Debug页面");
+		menu.add(0, 2, 1, "配置");
+		//menu.add(0, 3, 1, "测试页面");
+		return true;
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		// 跳到老的页面上
+		switch (item.getItemId()) {
+		case 1:
+			Intent old_activity = new Intent(PersonalMain.this, Yunjian_json.class);
+			this.startActivity(old_activity);
+			break;
+		case 2:
+			//setLocationCenter(mLat, mLon, null);
+			break;
+		case 3:
+			Intent ss_activity = new Intent(PersonalMain.this, Settings.class);
+			this.startActivity(ss_activity);
+			break;
+		default:
+			return super.onOptionsItemSelected(item);
+		}
+		return true;
+	}
 }
