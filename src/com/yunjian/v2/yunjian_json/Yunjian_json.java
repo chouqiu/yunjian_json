@@ -99,6 +99,13 @@ public class Yunjian_json extends Activity {
 					_info.setTextColor(Color.argb(255, 255, 0, 0));
 	            	alarm.playBeep(0.3f);
 	            	alarm.playVibrator();
+					/*
+					if ( fangcha < 50000 ) {
+						alarm.do_play(AlarmBeep.MSG_ALARM_LOW);
+					} else {
+						alarm.do_play(AlarmBeep.MSG_ALARM_HIGH);
+					}
+					*/
 				} else {
 					_info.setTextColor(Color.argb(255, 0, 0, 0));
 					//_mag.setTextColor(Color.argb(255, 0, 0, 0));

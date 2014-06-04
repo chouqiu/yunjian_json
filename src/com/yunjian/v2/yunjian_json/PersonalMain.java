@@ -390,7 +390,7 @@ public class PersonalMain extends Activity implements BDLocationListener {
 		super.onCreateOptionsMenu(menu);
 		menu.add(0, 1, 1, "Debug页面");
 		menu.add(0, 2, 1, "配置");
-		//menu.add(0, 3, 1, "测试页面");
+		//menu.add(0, 3, 1, "定位当前位置");
 		return true;
 	}
 
@@ -403,11 +403,11 @@ public class PersonalMain extends Activity implements BDLocationListener {
 			this.startActivity(old_activity);
 			break;
 		case 2:
-			//setLocationCenter(mLat, mLon, null);
-			break;
-		case 3:
 			Intent ss_activity = new Intent(PersonalMain.this, Settings.class);
 			this.startActivity(ss_activity);
+			break;
+		case 3:
+			//setLocationCenter(mLat, mLon, null);
 			break;
 		default:
 			return super.onOptionsItemSelected(item);
