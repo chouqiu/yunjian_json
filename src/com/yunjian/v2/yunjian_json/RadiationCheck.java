@@ -18,7 +18,7 @@ public class RadiationCheck {
     private static final double SHAKE_SHRESHOLD = 70; 
     private static int CONTINUOUS_ALARM_CNT = 3; // 连续n次达到告警标准时才告警
     
-    private static int MAX_FANGCHA = 9000;
+    public static int MAX_FANGCHA = 9000;
     private static int MAG_LIMIT = 1;
     private static boolean MOVEABLE = true;
 	
