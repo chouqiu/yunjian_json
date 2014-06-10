@@ -27,23 +27,19 @@
          android:fitsSystemWindows.
     -->
 
-    <FrameLayout
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:fitsSystemWindows="true" >
-
-        <LinearLayout
-            android:layout_width="match_parent"
-		    android:layout_height="match_parent"
-		    android:gravity="center_horizontal"
-		    android:id="@+id/main_layout"
-		    android:orientation="vertical" >
+	    android:layout_height="match_parent"
+	    android:gravity="center_horizontal"
+	    android:id="@+id/main_layout"
+	    android:orientation="vertical" >
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="30dp"
         android:layout_weight="3"
+        android:orientation="horizontal"
         android:gravity="center_horizontal" >
 
         <TextView
@@ -66,16 +62,30 @@
 
     </LinearLayout>
 
-    <RatingBar
-        android:id="@+id/rad_rate"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:layout_weight="4"
-        android:isIndicator="true" />
+	    <ExpandableListView
+	        android:id="@+id/expandlist"
+	        android:layout_width="match_parent"
+	        android:layout_height="wrap_content"
+	        android:background="#00000000"
+	        android:cacheColorHint="#00000000"
+	        android:childDivider="@drawable/list_line"
+	        android:layout_weight="10"
+	        android:divider="@null"
+	        android:visibility="visible"
+	        android:listSelector="#00000000" >
+	    </ExpandableListView>
+
+	    <RatingBar
+	        android:id="@+id/rad_rate"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_marginTop="10dp"
+	        android:layout_weight="5"
+	        android:visibility="gone"
+	        android:isIndicator="true" />
 
     <!-- 
-    <TextView
+    	<TextView
         android:id="@+id/rad_info"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -85,7 +95,7 @@
         android:textAppearance="?android:attr/textAppearanceLarge"
         android:textSize="40dp" /> -->
 
-    <LinearLayout
+    	<LinearLayout
             android:id="@+id/fullscreen_content_controls"
             style="?buttonBarStyle"
             android:layout_width="match_parent"
@@ -97,53 +107,55 @@
 
             <Button
                 android:id="@+id/btn_main"
-                style="?buttonBarButtonStyle"
-                android:layout_width="0dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
+                style="@style/bottom_button_style"
                 android:text="主 页" />
             <Button
-                android:id="@+id/btn_rpt"
-                style="?buttonBarButtonStyle"
-                android:layout_width="0dp"
+                android:id="@+id/btn_rpt"             
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
+                style="@style/bottom_button_style"
                 android:text="上 报" />
         </LinearLayout>
         <LinearLayout
             android:id="@+id/button_controls"
-            style="?buttonBarStyle"
+            style="@style/bottom_button_style"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="bottom|center_horizontal"
-            android:background="@color/black_overlay"
             android:orientation="horizontal"
+            android:columnCount="3"
+            android:rowCount="1"
             tools:ignore="UselessParent" >
 
             <ImageButton
                 android:id="@+id/imgbtn_about"
-                android:layout_width="0dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
+                style="@style/bottom_button_style"
                 android:src="@drawable/custom_loc" />
 
             <ImageButton
                 android:id="@+id/imgbtn_find"
-                android:layout_width="0dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
+                style="@style/bottom_button_style"
                 android:src="@drawable/custom_loc" />
 
             <ImageButton
                 android:id="@+id/imgbtn_conf"
-                android:layout_width="0dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
+                style="@style/bottom_button_style"
                 android:src="@drawable/custom_loc" />
         </LinearLayout>
 
 </LinearLayout>
-
-    </FrameLayout>
 
 </FrameLayout>

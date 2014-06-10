@@ -1,5 +1,10 @@
 package com.yunjian.v2.yunjian_json;
 
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
 import com.baidu.location.BDLocation;
 import com.baidu.location.BDLocationListener;
 import com.baidu.location.LocationClient;
@@ -8,15 +13,20 @@ import com.baidu.location.LocationClientOption.LocationMode;
 import com.yunjian.v2.API.AlarmBeep;
 import com.yunjian.v2.mapLocation.RadiationMainMap;
 import com.yunjian.v2.mapLocation.ReportRadLocation;
+import com.yunjian.v2.timeline.main.OneStatusEntity;
+import com.yunjian.v2.timeline.main.StatusExpandAdapter;
+import com.yunjian.v2.timeline.main.TwoStatusEntity;
 import com.yunjian.v2.yunjian_json.util.SystemUiHider;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -26,10 +36,12 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
+import android.widget.ExpandableListView;
 import android.widget.ImageButton;
 import android.widget.RatingBar;
 import android.widget.TextView;
 import android.widget.PopupWindow;
+import android.widget.ExpandableListView.OnGroupClickListener;
 import android.app.ActionBar.LayoutParams; 
 
 /**
@@ -73,7 +85,7 @@ public class PersonalMain extends Activity implements BDLocationListener {
 	private RadiationCheck mAlarmCheck = null;
 	private RadiationAlarmListener mAlarmListener = null;
 	
- 	private RatingBar mRb = null;
+ 	//private RatingBar mRb = null;
  	private TextView mTrb = null;
  	private TextView mInfo = null;
  	
@@ -93,6 +105,16 @@ public class PersonalMain extends Activity implements BDLocationListener {
 	private View popView;
 	private PopupWindow popWin;
 	private Button mbr;
+	
+	/**
+	 * 时间轴视图
+	 */
+	private List<OneStatusEntity> oneList;
+	private ExpandableListView expandlistView;
+	private StatusExpandAdapter statusAdapter;
+	private Context context;
+	private final static SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+	private final static SimpleDateFormat tf = new SimpleDateFormat("HH:mm");
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -206,9 +228,9 @@ public class PersonalMain extends Activity implements BDLocationListener {
 			}  
 		});
 		
-		mRb = (RatingBar)findViewById(R.id.rad_rate);
-		mRb.setIsIndicator(true);
-		mRb.setStepSize(1);
+		//mRb = (RatingBar)findViewById(R.id.rad_rate);
+		//mRb.setIsIndicator(true);
+		//mRb.setStepSize(1);
 		mTrb = (TextView)findViewById(R.id.title_stat);
 		mInfo = (TextView)controlsView;
 		
@@ -229,17 +251,20 @@ public class PersonalMain extends Activity implements BDLocationListener {
 				int delayval = 0;
 				
 				if ( max_avg <= 1.5 ) {
-					mRb.setRating(3.0f);
+					addOneItem("低辐射");
+					//mRb.setRating(3.0f);
 					//mTrb.setText("小心");
 					mInfo.setText("附近有辐射源，请小心");
 					delayval = 3000;
 				} else if ( max_avg <= 5 ) {
-					mRb.setRating(4.0f);
+					//mRb.setRating(4.0f);
+					addOneItem("中等辐射");
 					mTrb.setText("危险");
 					mInfo.setText("附近辐射较强，请远离");
 					delayval = 8000;
 				} else {
-					mRb.setRating(5.0f);
+					//mRb.setRating(5.0f);
+					addOneItem("高危辐射");
 					mTrb.setText("严重");
 					mInfo.setText("附近辐射严重，速走");
 					delayval = 13000;
@@ -252,6 +277,8 @@ public class PersonalMain extends Activity implements BDLocationListener {
 					r.go();
 				}
 				
+				statusAdapter.notifyDataSetChanged();
+				
 				delayedHide(delayval);
 				mSystemUiHider.show();
 			}
@@ -259,12 +286,52 @@ public class PersonalMain extends Activity implements BDLocationListener {
 			@Override
 			public void onRadiationChange(double x, double y, double z, double fangcha, 
 					int isAlarm, AlarmBeep alarm) {
-				// TODO Auto-generated method stub
-				
+				// 处理告警
+				if ( isAlarm > 0 ) {
+					alarm.playBeep(0.3f);
+	            	alarm.playVibrator();
+	            	addOneItem("电磁辐射");
+	            	
+	            	// 上报告警
+					if ( mLat != 0f || mLon != 0f ) {
+						ReportRadLocation r = new ReportRadLocation(PersonalMain.this.getApplicationContext());
+						r.setReportParam(mLat, mLon, x, y, z, ReportRadLocation.TYPE_MF);
+						r.go();
+					}
+					statusAdapter.notifyDataSetChanged();
+					expandlistView.setSelection(0);
+				}
 			}
 			
         };
         mAlarmCheck = new RadiationCheck(mAlarmListener, this);
+        
+        context = this;
+		expandlistView = (ExpandableListView) findViewById(R.id.expandlist);
+		
+		
+		
+		putInitData();
+		
+		statusAdapter = new StatusExpandAdapter(context, oneList);
+		//billAdapter = new BizAccountBillAdapter(this);
+		
+		expandlistView.setAdapter(statusAdapter);
+		expandlistView.setGroupIndicator(null); // 去掉默认带的箭头
+
+		// 遍历所有group,将所有项设置成默认展开
+		int groupCount = expandlistView.getCount();
+		for (int i = 0; i < groupCount; i++) {
+			expandlistView.expandGroup(i);
+		}
+		expandlistView.setOnGroupClickListener(new OnGroupClickListener() {
+
+			@Override
+			public boolean onGroupClick(ExpandableListView parent, View v, int groupPosition, long id) {
+				// TODO Auto-generated method stub
+				return true;
+			}
+		});
         
         /**
          * 设置定位监听功能
@@ -326,7 +393,7 @@ public class PersonalMain extends Activity implements BDLocationListener {
 	}
 	
 	private void resetAlarmStat() {
-		mRb.setRating(0.0f);
+		//mRb.setRating(0.0f);
 		//mTrb.setText("安全");
 		mInfo.setText("周边安全");
 	}
@@ -349,6 +416,22 @@ public class PersonalMain extends Activity implements BDLocationListener {
         if ( reqret != 0 ) {
         	Log.d("LocSDK3", "locClient req failed: "+reqret);
         }
+		
+     // 获取配置参数
+		SharedPreferences shp = PreferenceManager.getDefaultSharedPreferences(this);
+		int maxval = shp.getInt("radVal", 9000);
+		int magcnt = Integer.parseInt(shp.getString("magList", "1"));
+		int alarmval = shp.getInt("alarmVal", 12);
+		boolean moveable = shp.getBoolean("moveable", false);
+		
+		Log.d("radpref", "get max: "+maxval+" magcnt: "+magcnt+"alrm: "+alarmval+" mv: "+moveable);
+		
+		//registerReceiver(mBR, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+		mAlarmCheck.setMaxFangcha(maxval);
+		mAlarmCheck.setMagLimit(magcnt);
+		mAlarmCheck.setAlarmLimit(alarmval);
+		mAlarmCheck.setMoveable(moveable);
+		mAlarmCheck.registerDevice();
 		
 		// 注册告警
 		mAlarmCheck.registerDevice();
@@ -413,5 +496,73 @@ public class PersonalMain extends Activity implements BDLocationListener {
 			return super.onOptionsItemSelected(item);
 		}
 		return true;
+	}
+	
+	private void putInitData() {
+		String[] strArray = new String[]{"变电站", "发射塔", "地震"};
+		//String[] str1 = new String[]{"附近有变电站，请远离", "附近有发射塔，请远离", "云南曲靖发生5.2级地震，对您暂无影响"};
+		String[] str1 = new String[]{"2013-11-01", "2013-12-02", "2014-05-02", "2014-05-16", "2014-06-02"};
+		//String[] str2 = new String[]{"您附近有低量辐射，请注意活动", "您附近有堵车，请注意", "您附近有传染病医院，请注意", "您附近道路有积水，请小心驾驶", "您附近空气质量不佳，请远离"};
+		String[] str2 = new String[]{"低辐射", "堵车", "传染医院", "道路积水", "空气质量"};
+		//String[] str3 = new String[]{"买方到银行抵押手续", "买方取他向权利证", "银行给卖方划尾款", "全部办结"};
+		
+		String[] timeStr2 = new String[]{"09:02", "13:16", 
+				"08:24", "10:13", "13:18", 
+				"17:55", "20:38", "23:32"};
+		//String[] timeStr3 = new String[]{"", "", "", ""};
+		
+		oneList = new ArrayList<OneStatusEntity>();
+		List<TwoStatusEntity> twoList = new ArrayList<TwoStatusEntity>();
+		for ( int i=0, j=0, k=0; i<timeStr2.length; i++ ) {
+			switch ( i ) {
+			case 1:
+			case 4:
+			case 7:
+				OneStatusEntity one = new OneStatusEntity();
+				one.setStatusName(strArray[j]);
+				one.setCompleteTime(str1[j]);
+				one.setEventName(timeStr2[i]);
+				one.setTwoList(twoList);
+				j++;
+				oneList.add(one);
+				twoList = new ArrayList<TwoStatusEntity>();
+				break;
+			default:
+				TwoStatusEntity two = new TwoStatusEntity();
+				two.setStatusName(str2[k]);
+				two.setCompleteTime(str1[k]);
+				two.setEventName(timeStr2[i]);
+				two.setIsfinished(true);
+				k++;
+				twoList.add(two);
+				break;
+			}
+		}
+		
+	}
+	
+	private OneStatusEntity addOneItem(String title) {
+		OneStatusEntity one = new OneStatusEntity();
+		one.setStatusName(title);
+		
+		Date now = new Date();
+		one.setCompleteTime(df.format(now));
+		one.setEventName(tf.format(now));
+		one.setTwoList(new ArrayList<TwoStatusEntity>());
+		
+		oneList.add(0, one);
+		
+		return one;
+	}
+	
+	private void addTwoItem(String title) {
+		OneStatusEntity one = addOneItem("");
+		
+		TwoStatusEntity two = new TwoStatusEntity();
+		two.setStatusName(title);
+		two.setCompleteTime(one.getCompleteTime());
+		two.setEventName(one.getEventName());
+		two.setIsfinished(true);
+		one.getTwoList().add(0, two);
 	}
 }

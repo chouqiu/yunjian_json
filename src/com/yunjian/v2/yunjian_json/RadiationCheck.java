@@ -92,8 +92,8 @@ public class RadiationCheck {
 		MOVEABLE = mv;
 	}
 	
-	public void setAlarmLimit( double limit ) {
-		alarm_limit = limit;
+	public void setAlarmLimit( int limit ) {
+		alarm_limit = limit / 10.0f;
 	}
 	
 	public void setComputeLength( int len ) {

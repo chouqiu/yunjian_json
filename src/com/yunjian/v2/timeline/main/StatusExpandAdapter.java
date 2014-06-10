@@ -17,7 +17,7 @@ public class StatusExpandAdapter extends BaseExpandableListAdapter {
 	private List<OneStatusEntity> oneList;
 	private Context context;
 	
-	//private static final int USE_BIZ = 1;
+	private static final int USE_BIZ = 1;
 	private static final int USE_ORG = 2;
 	private int _type = USE_ORG;
 	
@@ -51,7 +51,12 @@ public class StatusExpandAdapter extends BaseExpandableListAdapter {
 	@Override
 	public TwoStatusEntity getChild(int groupPosition, int childPosition) {
 		// TODO Auto-generated method stub
-		return oneList.get(groupPosition).getTwoList().get(childPosition);
+		List<TwoStatusEntity> tl = oneList.get(groupPosition).getTwoList();
+		if ( tl.size() > 0 ) {
+			return tl.get(childPosition);
+		} else {
+			return null;
+		}
 	}
 
 	@Override
@@ -83,19 +88,28 @@ public class StatusExpandAdapter extends BaseExpandableListAdapter {
 			holder.groupName = (TextView) convertView.findViewById(R.id.one_status_name);
 			holder.group_tiao = (TextView) convertView.findViewById(R.id.group_tiao);
 			holder.eventName = (TextView) convertView.findViewById(R.id.one_complete_name);
-			holder.statTime = (TextView) convertView.findViewById(R.id.one_complete_time);
+			holder.statTime = (TextView) convertView.findViewById(R.id.one_status_time);
+			//String html = "<b>"+oneList.get(groupPosition).getStatusName()+"</b><br/>"+
+			//		oneList.get(groupPosition).getEventName()+"<br/>"+
+			//		oneList.get(groupPosition).getCompleteTime();
 			
+			//holder.groupName.setText(Html.fromHtml(html));
 			holder.groupName.setText(oneList.get(groupPosition).getStatusName());
-			holder.eventName.setText(oneList.get(groupPosition).getEventName());
-			holder.statTime.setText(oneList.get(groupPosition).getCompleteTime());
-			if(oneList.get(groupPosition).getTwoList().get(0).isIsfinished()){
+			holder.eventName.setText(oneList.get(groupPosition).getCompleteTime());
+			holder.statTime.setText(oneList.get(groupPosition).getEventName());
+			
+			//LayoutParams lp = convertView.getLayoutParams();
+			//lp.height += 20;
+			//convertView.setLayoutParams(lp);
+			
+			//if(oneList.get(groupPosition).getTwoList().get(0).isIsfinished()){
 				holder.group_tiao.setBackgroundColor(context.getResources().getColor(R.color.yellow));
-			}else{
-				holder.group_tiao.setBackgroundColor(context.getResources().getColor(R.color.grey));
-			}
+			//}else{
+			//	holder.group_tiao.setBackgroundColor(context.getResources().getColor(R.color.grey));
+			//}
 			
 		} else {
-			/**
+			/*
 			FirstViewHolder firstholder = null;
 	
 			//String pre = (position - 1) < 0 ? null : "2014-06-02";
@@ -116,6 +130,7 @@ public class StatusExpandAdapter extends BaseExpandableListAdapter {
 				firstholder.checkLayout = (LinearLayout) convertView
 						.findViewById(R.id.checkLayout);
 				convertView.setTag(firstholder);
+	
 			} else {
 				firstholder = (FirstViewHolder) convertView.getTag();
 				firstholder.time_line_top.setVisibility(View.VISIBLE);
@@ -126,7 +141,7 @@ public class StatusExpandAdapter extends BaseExpandableListAdapter {
 				lp_first.setMargins(0, 0, 0, 0);
 				firstholder.head_point.setLayoutParams(lp_first);
 			}
-			 */
+			*/
 		}
 		
 		return convertView;
@@ -135,6 +150,7 @@ public class StatusExpandAdapter extends BaseExpandableListAdapter {
 	@Override
 	public View getChildView(int groupPosition, int childPosition, boolean isLastChild, View convertView,
 			ViewGroup parent) {
+		// TODO entity为空怎么办??
 		if ( _type == USE_ORG ) {
 			ChildViewHolder viewHolder = null;
 			TwoStatusEntity entity = getChild(groupPosition, childPosition);
@@ -144,15 +160,20 @@ public class StatusExpandAdapter extends BaseExpandableListAdapter {
 				viewHolder = new ChildViewHolder();
 				convertView = inflater.inflate(R.layout.two_status_item, null);
 				viewHolder.childName = (TextView) convertView.findViewById(R.id.two_status_name);
-				viewHolder.twoStatusTime = (TextView) convertView.findViewById(R.id.two_complete_time);
+				viewHolder.twoStatusTime = (TextView) convertView.findViewById(R.id.two_status_time);
+				viewHolder.twoStatusDate = (TextView) convertView.findViewById(R.id.two_status_date);
+				//viewHolder.twoStatusTime = (TextView) convertView.findViewById(R.id.two_complete_time);
 				viewHolder.tiao = (TextView) convertView.findViewById(R.id.tiao);
-				
-				
-				
-				
 			}
+			
+			//String html = "<b>"+entity.getStatusName()+"</b><br/>"+entity.getCompleteTime();
+			//viewHolder.childName.setText(Html.fromHtml(html));
+			viewHolder.twoStatusTime.setText(entity.getEventName());
+			viewHolder.twoStatusDate.setText(entity.getCompleteTime());
 			viewHolder.childName.setText(entity.getStatusName());
-			viewHolder.twoStatusTime.setText(entity.getCompleteTime());
+			
+			//viewHolder.childName.setText(entity.getStatusName());
+			//viewHolder.twoStatusTime.setText(entity.getCompleteTime());
 			
 			if(entity.isIsfinished()){
 				viewHolder.tiao.setBackgroundColor(context.getResources().getColor(R.color.yellow));
@@ -163,7 +184,7 @@ public class StatusExpandAdapter extends BaseExpandableListAdapter {
 			convertView.setTag(viewHolder);
 			
 		} else {
-			/**
+			/*
 			SecondViewHolder secondholder = null;
 			
 			if (convertView == null) {
@@ -185,7 +206,7 @@ public class StatusExpandAdapter extends BaseExpandableListAdapter {
 				secondholder.head_point.setLayoutParams(lp_second);
 			}
 			convertView.setTag(secondholder);
-			 */
+			*/
 		}
 		
 		return convertView;
@@ -207,6 +228,56 @@ public class StatusExpandAdapter extends BaseExpandableListAdapter {
 	private class ChildViewHolder {
 		public TextView childName;
 		public TextView twoStatusTime;
+		public TextView twoStatusDate;
 		public TextView tiao;
 	}
+
+	/*
+	public void initCommon(BaseViewHolder holder_, View convertView_) {
+		holder_.time_line_top = (TextView) convertView_
+				.findViewById(R.id.time_line_top);
+		holder_.time_line_bottom = (TextView) convertView_
+				.findViewById(R.id.time_line_bottom);
+		holder_.head_point = (ImageView) convertView_
+				.findViewById(R.id.head_point);
+		holder_.right_layout = (LinearLayout) convertView_
+				.findViewById(R.id.right_layout);
+
+		holder_.tv_month = (TextView) convertView_.findViewById(R.id.tv_month);
+		holder_.tv_day = (TextView) convertView_.findViewById(R.id.tv_day);
+		holder_.tv_week = (TextView) convertView_.findViewById(R.id.tv_week);
+		holder_.tv_case = (TextView) convertView_.findViewById(R.id.tv_case);
+		holder_.right_layout = (LinearLayout) convertView_
+				.findViewById(R.id.right_layout);
+		holder_.main_background = (LinearLayout) convertView_
+				.findViewById(R.id.main_background);
+		holder_.detailcheckhistory = (LinearLayout) convertView_
+				.findViewById(R.id.detailcheckhistory);
+		holder_.state_text = (TextView) convertView_
+				.findViewById(R.id.state_text);
+		holder_.expense_amount = (TextView) convertView_
+				.findViewById(R.id.expense_amount);
+		holder_.expenseTypeName = (TextView) convertView_
+				.findViewById(R.id.expenseTypeName);
+		holder_.number = (TextView) convertView_.findViewById(R.id.number);
+	}
+	
+	class BaseViewHolder {
+		TextView tv_month, tv_day, tv_week, tv_case, time_line_bottom,
+				time_line_top, expense_amount, state_text, expenseTypeName,
+				number;
+		ImageView head_point;
+		LinearLayout right_layout, main_background, detailcheckhistory;
+	}
+
+	class FirstViewHolder extends BaseViewHolder {
+		TextView tv_department, tv_name;
+		ImageView img_state;
+		LinearLayout checkLayout;
+	}
+
+	class SecondViewHolder extends BaseViewHolder {
+		TextView check_amount;
+	}
+	*/
 }

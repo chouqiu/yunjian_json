@@ -139,18 +139,15 @@ public class Yunjian_json extends Activity {
 		SharedPreferences shp = PreferenceManager.getDefaultSharedPreferences(this);
 		int maxval = shp.getInt("radVal", 9000);
 		int magcnt = Integer.parseInt(shp.getString("magList", "1"));
-		int alarmval = shp.getInt("alarmVal", 3);
+		int alarmval = shp.getInt("alarmVal", 12);
 		boolean moveable = shp.getBoolean("moveable", false);
 		
-		/* TODO seekbar设置的整数，暂时用这种方法转换一下*/
-		double realval = (double)alarmval/10.0f*2.5f+0.5f;
-		
-		Log.d("radpref", "get max: "+maxval+" magcnt: "+magcnt+"alrm: "+df.format(realval)+" mv: "+moveable);
+		Log.d("radpref", "get max: "+maxval+" magcnt: "+magcnt+"alrm: "+alarmval+" mv: "+moveable);
 		
 		//registerReceiver(mBR, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
 		mChecker.setMaxFangcha(maxval);
 		mChecker.setMagLimit(magcnt);
-		mChecker.setAlarmLimit(realval);
+		mChecker.setAlarmLimit(alarmval);
 		mChecker.setMoveable(moveable);
 		mChecker.registerDevice();
 		
