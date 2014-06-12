@@ -2,16 +2,23 @@ package com.yunjian.v2.mapLocation;
 
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.AlertDialog.Builder;
+import android.app.Notification;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -28,6 +35,7 @@ import com.baidu.mapapi.map.MapView;
 import com.baidu.mapapi.map.OverlayItem;
 import com.baidu.mapapi.map.PopupOverlay;
 import com.baidu.mapapi.map.PopupClickListener;
+import com.baidu.mapapi.utils.DistanceUtil;
 import com.baidu.platform.comapi.basestruct.GeoPoint;
 
 import com.baidu.location.BDLocation;
@@ -70,6 +78,12 @@ public class RadiationMainMap extends Activity implements BDLocationListener,Get
 	public int mNumSat = 0;
 	public String mAddr = "";
 	private LocationClient mLocationClient = null;
+	
+	/**
+	 * 设置定时器
+	 */
+	Timer timer = null;
+	TimerTask task = null;
 	
 	/**
 	 * 监测辐射强度
@@ -156,6 +170,7 @@ public class RadiationMainMap extends Activity implements BDLocationListener,Get
         // 启动定位服务
         mLocationClient.start();
         
+        
         // 设置陀螺仪告警监听
         mAlarmListener = new RadiationAlarmListener() {
         	private int mv_cnt = 0;
@@ -175,15 +190,21 @@ public class RadiationMainMap extends Activity implements BDLocationListener,Get
 				// 插入Overlay标志，并上报GeoPoint和当前辐射最大值
 				mRadOverlay.AddOverlayItem(BMapUtil.genGeoPoint(mLat, mLon), "辐射点", "辐射点信息", null);
 				ReportRadLocation r = new ReportRadLocation(RadiationMainMap.this.getApplicationContext());
-				r.setReportParam(mLat, mLon, x, y, z, ReportRadLocation.TYPE_MF);
+				r.setReportParam(mLat, mLon, x, y, z, 0f, ReportRadLocation.TYPE_MF);
 				r.go();
 			}
 
 			@Override
 			public void onRadiationChange(double x, double y, double z, double fangcha, 
 					int isAlarm, AlarmBeep alarm) {
-				// TODO Auto-generated method stub
-				
+				if ( isAlarm > 0 ) {
+					setLocationCenter(mLat, mLon, null);
+					// 插入Overlay标志，并上报GeoPoint和当前辐射最大值
+					mRadOverlay.AddOverlayItem(BMapUtil.genGeoPoint(mLat, mLon), "辐射点", "辐射点信息", null);
+					ReportRadLocation r = new ReportRadLocation(RadiationMainMap.this.getApplicationContext());
+					r.setReportParam(mLat, mLon, x, y, z, fangcha, ReportRadLocation.TYPE_MF);
+					r.go();
+				}
 			}
         };
         mAlarmCheck = new RadiationCheck(mAlarmListener, this);
@@ -227,7 +248,7 @@ public class RadiationMainMap extends Activity implements BDLocationListener,Get
 							//if ( mTapItem != null ) mRadOverlay.removeItem(mTapItem);
 							mRadOverlay.AddOverlayItem(mTapPoint, "辐射点", "辐射点信息", null);
 							ReportRadLocation r = new ReportRadLocation(RadiationMainMap.this.getApplicationContext());
-							r.setReportParam(mTapPoint.getLatitudeE6()/1E6, mTapPoint.getLongitudeE6()/1E6, 0f, 0f, 0f, ReportRadLocation.TYPE_MF);
+							r.setReportParam(mTapPoint.getLatitudeE6()/1E6, mTapPoint.getLongitudeE6()/1E6, 0f, 0f, 0f, 0f, ReportRadLocation.TYPE_MF);
 							r.go();
 						}
 						
@@ -458,6 +479,23 @@ public class RadiationMainMap extends Activity implements BDLocationListener,Get
 		
 		if ( bCenterflag )
 			setLocationCenter(mLat, mLon, null);
+		
+		// 设置定时器
+		if ( timer == null ) {
+			timer = new Timer();
+			task = new TimerTask() {
+
+				@Override
+				public void run() {
+					// 定时触发拉取数据动作
+					mGetlist.getList(mMapView.getMapCenter());
+				}
+				
+			};
+			
+			// 10s后开始执行，每5分钟执行一次
+			timer.schedule(task, 10000, 300000);
+		}
 	}
 
 	@Override
@@ -471,10 +509,85 @@ public class RadiationMainMap extends Activity implements BDLocationListener,Get
 		mRadOverlay.clearOverlayItems();
 		// 在图上画点
 		Iterator<RadPoint> it = arr.iterator();
+		RadPoint pAlarm = null;
+		
 		while ( it.hasNext() ) {
 			RadPoint p = it.next();
-			mRadOverlay.AddOverlayItem(BMapUtil.genGeoPoint(p.lat, p.lon), "辐射点", "辐射点信息", null);
+			GeoPoint pp = BMapUtil.genGeoPoint(p.lat, p.lon);
+			mRadOverlay.AddOverlayItem(pp, "辐射点", "辐射点信息", null);
+			
+			GeoPoint p2 = BMapUtil.genGeoPoint(mLat, mLon);
+			if ( DistanceUtil.getDistance(pp, p2) < 5.0f ) {
+				pAlarm = p;
+			}
+		}
+		
+		if ( pAlarm == null ) {
+			if ( pAlarm.maxval < 20000 ) {
+				// 延迟告警
+				new ThreadShow(300000, 1);
+			} else {
+				new ThreadShow(5000, 2);
+			}
 		}
 	}
+	
+	Handler handler = new Handler() {  
+        public void handleMessage(Message msg) {  
+            switch(msg.what) {  
+            case 1:
+            	// 在提示栏提示告警
+    			showDefaultNotification("您附近存在低量辐射", "请小心，注意活动、远离");
+    			break;
+            case 2:
+            	showDefaultNotification("您附近存在高量辐射", "请即刻远离");
+            	break;
+            default:
+            	break;
+            }  
+        };  
+    };
     
+    // 线程类  
+    private class ThreadShow implements Runnable {
+    	private int delay = 0;
+    	private int id = 0;
+    	
+    	public ThreadShow(int mill, int msgid) {
+    		delay = mill;
+    		id = msgid;
+    	}
+  
+        @Override  
+        public void run() {  
+            // 定时发消息
+            while (true) {  
+                try {  
+                    Thread.sleep(delay);  
+                    Message msg = new Message();  
+                    msg.what = id;  
+                    handler.sendMessage(msg);  
+                } catch (Exception e) {  
+                    e.printStackTrace();  
+                }  
+            }  
+        }  
+    }
+    
+	private void showDefaultNotification(String title, String content) {
+		Notification noti = new Notification();
+		
+		noti.icon = R.drawable.icon_geo;
+		noti.tickerText = title;
+		noti.when = System.currentTimeMillis();
+		
+		noti.defaults |= Notification.DEFAULT_SOUND | Notification.DEFAULT_VIBRATE;
+		noti.flags |= Notification.FLAG_AUTO_CANCEL;
+		
+		PendingIntent contentIntent = PendingIntent.getActivity(RadiationMainMap.this, 0, new Intent("android.settings.SETTINGS"), 0);
+		noti.setLatestEventInfo(RadiationMainMap.this, "附近有辐射", content, contentIntent);
+		
+		NotificationManager notiM = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
+		notiM.notify(2, noti);
+	}
 }

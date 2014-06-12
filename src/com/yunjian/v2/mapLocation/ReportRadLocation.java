@@ -26,11 +26,12 @@ public class ReportRadLocation extends PostTask {
 		}
 	}
 	
-	public void setReportParam(double lat, double lon, double diffx, double diffy, double diffz, String type) {
+	public void setReportParam(double lat, double lon, double diffx, double diffy, double diffz, double max, String type) {
 		mJson = new JsonHelper();
 		mJson.setString("IMEI", mIMEI);
 		mJson.setDouble("lat", lat);
 		mJson.setDouble("lon", lon);
+		mJson.setDouble("MaxVal", max);
 		
 		ArrayList<Double> arr = new ArrayList<Double>();
 		arr.add(diffx);
@@ -44,7 +45,7 @@ public class ReportRadLocation extends PostTask {
 	
 	@Override
 	protected String getPostParams() {
-		// {IMEI:"2342sdf",lat:32.323,lon:43.343,time:1400923923,diff_val:[1.5,2.7,4.9],type:"MF/EF/RF"}
+		// {IMEI:"2342sdf",lat:32.323,lon:43.343,maxval:43443.9,time:1400923923,diff_val:[1.5,2.7,4.9],type:"MF/EF/RF"}
 		if ( mJson != null ) {
 			return mJson.toString();
 		}

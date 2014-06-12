@@ -273,7 +273,7 @@ public class PersonalMain extends Activity implements BDLocationListener {
 				// 上报告警
 				if ( mLat != 0f || mLon != 0f ) {
 					ReportRadLocation r = new ReportRadLocation(PersonalMain.this.getApplicationContext());
-					r.setReportParam(mLat, mLon, x, y, z, ReportRadLocation.TYPE_MF);
+					r.setReportParam(mLat, mLon, x, y, z, 0f, ReportRadLocation.TYPE_MF);
 					r.go();
 				}
 				
@@ -295,7 +295,7 @@ public class PersonalMain extends Activity implements BDLocationListener {
 	            	// 上报告警
 					if ( mLat != 0f || mLon != 0f ) {
 						ReportRadLocation r = new ReportRadLocation(PersonalMain.this.getApplicationContext());
-						r.setReportParam(mLat, mLon, x, y, z, ReportRadLocation.TYPE_MF);
+						r.setReportParam(mLat, mLon, x, y, z, fangcha, ReportRadLocation.TYPE_MF);
 						r.go();
 					}
 					statusAdapter.notifyDataSetChanged();
