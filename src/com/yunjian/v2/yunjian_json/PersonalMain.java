@@ -29,20 +29,22 @@ import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.ViewGroup.LayoutParams;
 import android.widget.Button;
 import android.widget.ExpandableListView;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.RatingBar;
 import android.widget.TextView;
 import android.widget.PopupWindow;
-import android.widget.ExpandableListView.OnGroupClickListener;
-import android.app.ActionBar.LayoutParams; 
+import android.widget.ExpandableListView.OnGroupClickListener; 
 
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.
@@ -88,6 +90,7 @@ public class PersonalMain extends Activity implements BDLocationListener {
  	//private RatingBar mRb = null;
  	private TextView mTrb = null;
  	private TextView mInfo = null;
+ 	private ImageView mImgTitle = null;
  	
  	/**
 	 * 定位功能
@@ -104,7 +107,7 @@ public class PersonalMain extends Activity implements BDLocationListener {
 	
 	private View popView;
 	private PopupWindow popWin;
-	private Button mbr;
+	private ImageButton mbr;
 	
 	/**
 	 * 时间轴视图
@@ -113,8 +116,8 @@ public class PersonalMain extends Activity implements BDLocationListener {
 	private ExpandableListView expandlistView;
 	private StatusExpandAdapter statusAdapter;
 	private Context context;
-	private final static SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
-	private final static SimpleDateFormat tf = new SimpleDateFormat("HH:mm");
+	public final static SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+	public final static SimpleDateFormat tf = new SimpleDateFormat("HH:mm");
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -137,8 +140,9 @@ public class PersonalMain extends Activity implements BDLocationListener {
 					int mShortAnimTime;
 
 					@Override
-					@TargetApi(Build.VERSION_CODES.HONEYCOMB_MR2)
+					//@TargetApi(Build.VERSION_CODES.HONEYCOMB_MR2)
 					public void onVisibilityChange(boolean visible) {
+						/*
 						if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
 							// If the ViewPropertyAnimator API is available
 							// (Honeycomb MR2 and later), use it to animate the
@@ -156,12 +160,13 @@ public class PersonalMain extends Activity implements BDLocationListener {
 									.translationY(visible ? 0 : mControlsHeight)
 									.setDuration(mShortAnimTime);
 						} else {
+						*/
 							// If the ViewPropertyAnimator APIs aren't
 							// available, simply show or hide the in-layout UI
 							// controls.
 							controlsView.setVisibility(visible ? View.VISIBLE
 									: View.GONE);
-						}
+						//}
 
 						if (visible && AUTO_HIDE) {
 							// Schedule a hide().
@@ -203,14 +208,7 @@ public class PersonalMain extends Activity implements BDLocationListener {
 			}	
 		});
 		
-		// 上报
-		popView = ((LayoutInflater)PersonalMain.this.
-				getSystemService(Context.LAYOUT_INFLATER_SERVICE)).
-				inflate(R.layout.activity_pop_report, null);
-		popWin = new PopupWindow(popView,LayoutParams.WRAP_CONTENT,LayoutParams.WRAP_CONTENT);
-		//popWin.setTouchable(true);
-		
-		mbr = (Button)findViewById(R.id.btn_rpt);
+		mbr = (ImageButton)findViewById(R.id.imgbtn_rpt);
 		mbr.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
@@ -220,7 +218,7 @@ public class PersonalMain extends Activity implements BDLocationListener {
 					//popWin.showAsDropDown(mbr);
 					//int a = mbr.getLeft();
 					//int b = mbr.getTop();
-					mbr.getLocationInWindow(loc);
+					mbr.getLocationOnScreen(loc);
 					popWin.showAtLocation(mbr, Gravity.NO_GRAVITY, loc[0]-20, loc[1]-popView.getHeight()-100);
 				} else {
 					popWin.dismiss();
@@ -228,11 +226,30 @@ public class PersonalMain extends Activity implements BDLocationListener {
 			}  
 		});
 		
+		((ImageButton)findViewById(R.id.imgbtn_conf)).setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				// 切入配置页
+				Intent ss_activity = new Intent(PersonalMain.this, Settings.class);
+				PersonalMain.this.startActivity(ss_activity);
+			}  
+		});
+		
+		// 上报
+		popView = ((LayoutInflater)PersonalMain.this.
+				getSystemService(Context.LAYOUT_INFLATER_SERVICE)).
+				inflate(R.layout.activity_pop_report, null);
+		popWin = new PopupWindow(popView,LayoutParams.WRAP_CONTENT,LayoutParams.WRAP_CONTENT);
+		//popWin.setTouchable(true);
+		
+
+		
 		//mRb = (RatingBar)findViewById(R.id.rad_rate);
 		//mRb.setIsIndicator(true);
 		//mRb.setStepSize(1);
 		mTrb = (TextView)findViewById(R.id.title_stat);
 		mInfo = (TextView)controlsView;
+		mImgTitle = (ImageView)findViewById(R.id.img_title);
 		
 		// 初始化辐射监控组件
 		mAlarmListener = new RadiationAlarmListener() {
@@ -251,20 +268,20 @@ public class PersonalMain extends Activity implements BDLocationListener {
 				int delayval = 0;
 				
 				if ( max_avg <= 1.5 ) {
-					addOneItem("低辐射");
+					addOneItem("低辐射", false);
 					//mRb.setRating(3.0f);
 					//mTrb.setText("小心");
 					mInfo.setText("附近有辐射源，请小心");
 					delayval = 3000;
 				} else if ( max_avg <= 5 ) {
 					//mRb.setRating(4.0f);
-					addOneItem("中等辐射");
+					addOneItem("中等辐射", false);
 					mTrb.setText("危险");
 					mInfo.setText("附近辐射较强，请远离");
 					delayval = 8000;
 				} else {
 					//mRb.setRating(5.0f);
-					addOneItem("高危辐射");
+					addOneItem("高危辐射", false);
 					mTrb.setText("严重");
 					mInfo.setText("附近辐射严重，速走");
 					delayval = 13000;
@@ -290,7 +307,7 @@ public class PersonalMain extends Activity implements BDLocationListener {
 				if ( isAlarm > 0 ) {
 					alarm.playBeep(0.3f);
 	            	alarm.playVibrator();
-	            	addOneItem("电磁辐射");
+	            	addOneItem("电磁辐射", false);
 	            	
 	            	// 上报告警
 					if ( mLat != 0f || mLon != 0f ) {
@@ -300,6 +317,13 @@ public class PersonalMain extends Activity implements BDLocationListener {
 					}
 					statusAdapter.notifyDataSetChanged();
 					expandlistView.setSelection(0);
+					
+					// 更新显示
+					mInfo.setText("附近有辐射源，请小心");
+					mTrb.setText("危险");
+					mImgTitle.setImageResource(R.drawable.back_tip_head);
+					
+					delayedHide(5000);
 				}
 			}
 			
@@ -345,8 +369,7 @@ public class PersonalMain extends Activity implements BDLocationListener {
         option.setIsNeedAddress(true);//返回的定位结果包含地址信息
         option.setNeedDeviceDirect(true);//返回的定位结果包含手机机头的方向
         mLocationClient.setLocOption(option);
-        // 启动定位服务
-        mLocationClient.start();
+        
 	}
 
 	@Override
@@ -396,10 +419,13 @@ public class PersonalMain extends Activity implements BDLocationListener {
 		//mRb.setRating(0.0f);
 		//mTrb.setText("安全");
 		mInfo.setText("周边安全");
+		mTrb.setText("安全");
+		mImgTitle.setImageResource(R.drawable.checked_passed);
 	}
 
 	@Override
 	protected void onPause() {
+		mLocationClient.stop();
 		// 取消告警
 		mAlarmCheck.unRegisterDevice();
 		super.onPause();
@@ -431,10 +457,11 @@ public class PersonalMain extends Activity implements BDLocationListener {
 		mAlarmCheck.setMagLimit(magcnt);
 		mAlarmCheck.setAlarmLimit(alarmval);
 		mAlarmCheck.setMoveable(moveable);
-		mAlarmCheck.registerDevice();
 		
 		// 注册告警
 		mAlarmCheck.registerDevice();
+		// 启动定位服务
+        mLocationClient.start();
 		super.onResume();
 	}
 	
@@ -523,6 +550,7 @@ public class PersonalMain extends Activity implements BDLocationListener {
 				one.setCompleteTime(str1[j]);
 				one.setEventName(timeStr2[i]);
 				one.setTwoList(twoList);
+				one.setFinish(true);
 				j++;
 				oneList.add(one);
 				twoList = new ArrayList<TwoStatusEntity>();
@@ -541,7 +569,7 @@ public class PersonalMain extends Activity implements BDLocationListener {
 		
 	}
 	
-	private OneStatusEntity addOneItem(String title) {
+	private OneStatusEntity addOneItem(String title, boolean isFinish) {
 		OneStatusEntity one = new OneStatusEntity();
 		one.setStatusName(title);
 		
@@ -549,20 +577,30 @@ public class PersonalMain extends Activity implements BDLocationListener {
 		one.setCompleteTime(df.format(now));
 		one.setEventName(tf.format(now));
 		one.setTwoList(new ArrayList<TwoStatusEntity>());
+		one.setFinish(isFinish);
 		
 		oneList.add(0, one);
 		
 		return one;
 	}
 	
-	private void addTwoItem(String title) {
-		OneStatusEntity one = addOneItem("");
+	private void addTwoItem(String title, boolean isFinish) {
+		OneStatusEntity one = addOneItem("", false);
 		
 		TwoStatusEntity two = new TwoStatusEntity();
 		two.setStatusName(title);
 		two.setCompleteTime(one.getCompleteTime());
 		two.setEventName(one.getEventName());
-		two.setIsfinished(true);
+		two.setIsfinished(isFinish);
 		one.getTwoList().add(0, two);
+	}
+	
+	@Override
+	public boolean onKeyDown( int keyCode, KeyEvent event ) {
+		 if (keyCode == KeyEvent.KEYCODE_BACK || keyCode == KeyEvent.KEYCODE_HOME) {
+		        moveTaskToBack(false);
+		        return true;
+		    }
+	    return super.onKeyDown(keyCode, event);
 	}
 }

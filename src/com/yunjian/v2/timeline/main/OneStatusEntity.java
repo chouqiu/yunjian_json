@@ -12,6 +12,8 @@ public class OneStatusEntity {
 	/* 预计完成时间 */
 	private String completeTime;
 	private String eventName;
+	private boolean isFinish;
+
 	/* 二级状态list */
 	private List<TwoStatusEntity> twoList;
 	
@@ -40,8 +42,13 @@ public class OneStatusEntity {
 	}
 	public void setTwoList(List<TwoStatusEntity> twoList) {
 		this.twoList = twoList;
+	}	
+	
+	public boolean isFinish() {
+		return isFinish;
 	}
-	
-	
+	public void setFinish(boolean isFinish) {
+		this.isFinish = isFinish;
+	}
 	
 }

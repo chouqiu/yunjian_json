@@ -1,7 +1,9 @@
 package com.yunjian.v2.mapLocation;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -13,18 +15,22 @@ import android.app.AlertDialog.Builder;
 import android.app.Notification;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.SharedPreferences;
 import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.preference.PreferenceManager;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.baidu.mapapi.BMapManager;
@@ -78,6 +84,9 @@ public class RadiationMainMap extends Activity implements BDLocationListener,Get
 	public int mNumSat = 0;
 	public String mAddr = "";
 	private LocationClient mLocationClient = null;
+	private final static int UPDATE_TIME = 300;  // 更新威胁list的时间间隔
+	private final static int UPDATE_LOC = 10000; // 更新坐标的时间间隔
+	private int updatelocCount = 0;
 	
 	/**
 	 * 设置定时器
@@ -99,6 +108,13 @@ public class RadiationMainMap extends Activity implements BDLocationListener,Get
 	GeoPoint mTapPoint = null;
 	OverlayItem mTapItem = null;
 	GetRadiationList mGetlist = null;
+	
+	private PopupOverlay pop = null;
+	private View popView = null;
+	private TextView mapInfo = null;
+	
+	private double lastLat = 0f, lastLon = 0f; // 上次拉取数据时的距离
+	private int alarmDistance = 0; // 告警距离
 
 	/**
 	 *  MKMapViewListener 用于处理地图事件回调
@@ -150,7 +166,7 @@ public class RadiationMainMap extends Activity implements BDLocationListener,Get
         ((Button) findViewById(R.id.btn_report)).setOnClickListener(new Button.OnClickListener() {  
             @Override  
             public void onClick(View v) {  
-            	mRadListener.onTapMapView(BMapUtil.genGeoPoint(mLat, mLon));
+            	//mRadListener.onTapMapView(BMapUtil.genGeoPoint(mLat, mLon));
             }
 
         });
@@ -163,12 +179,10 @@ public class RadiationMainMap extends Activity implements BDLocationListener,Get
         LocationClientOption option = new LocationClientOption();
         option.setLocationMode(LocationMode.Hight_Accuracy);//设置定位模式
         option.setCoorType("bd09ll");//返回的定位结果是百度经纬度，默认值gcj02
-        option.setScanSpan(5000);//设置发起定位请求的间隔时间为5000ms
+        option.setScanSpan(UPDATE_LOC);//设置发起定位请求的间隔时间为5000ms
         option.setIsNeedAddress(true);//返回的定位结果包含地址信息
         option.setNeedDeviceDirect(true);//返回的定位结果包含手机机头的方向
         mLocationClient.setLocOption(option);
-        // 启动定位服务
-        mLocationClient.start();
         
         
         // 设置陀螺仪告警监听
@@ -198,7 +212,7 @@ public class RadiationMainMap extends Activity implements BDLocationListener,Get
 			public void onRadiationChange(double x, double y, double z, double fangcha, 
 					int isAlarm, AlarmBeep alarm) {
 				if ( isAlarm > 0 ) {
-					setLocationCenter(mLat, mLon, null);
+					//setLocationCenter(mLat, mLon, null);
 					// 插入Overlay标志，并上报GeoPoint和当前辐射最大值
 					mRadOverlay.AddOverlayItem(BMapUtil.genGeoPoint(mLat, mLon), "辐射点", "辐射点信息", null);
 					ReportRadLocation r = new ReportRadLocation(RadiationMainMap.this.getApplicationContext());
@@ -212,25 +226,39 @@ public class RadiationMainMap extends Activity implements BDLocationListener,Get
         /**
          * 设置告警标记Overlay
          */
+        pop = new PopupOverlay(mMapView, new PopupClickListener() {
+    		@Override
+    		public void onClickedPopup(int arg0) {
+    			// 暂时不做什么
+    		}
+    	});
+        popView = ((LayoutInflater)RadiationMainMap.this.
+    			getSystemService(Context.LAYOUT_INFLATER_SERVICE)).
+    			inflate(R.layout.activity_pop_mapinfo, null);
+        mapInfo = (TextView)popView.findViewById(R.id.tv_mapinfo);
+        
         mRadOverlay = new RadiationOverlay(this.getResources().getDrawable(R.drawable.icon_geo), mMapView);
         mRadListener = new RadOverlayInterface() {
-        	private PopupOverlay pop = new PopupOverlay(mMapView, new PopupClickListener() {
-				@Override
-				public void onClickedPopup(int arg0) {
-					// 暂时不做什么
-				}
-        	});
-        	private View popView = ((LayoutInflater)RadiationMainMap.this.
-        			getSystemService(Context.LAYOUT_INFLATER_SERVICE)).
-        			inflate(R.layout.activity_yunjian_json, null);
 			@Override
 			public void onTapRadPoint(int idx, OverlayItem it) {
 				// 显示辐射最大值，最后上报时间，上报人数
-				pop.showPopup(popView, it.getPoint(), 2);
+				RadPoint rp = mGetlist.GetPoint(idx);
+				if ( rp != null && mapInfo != null ) {
+					mapInfo.setText("上报人数: "+rp.report_count+"次\n"+"上报时间: "+PersonalMain.df.format(rp.lasttime*1000)+
+							" "+PersonalMain.tf.format(rp.lasttime*1000)+"\n"+
+							"位置: ");
+					pop.showPopup(popView, it.getPoint(), 50);
+				}
 			}
 
 			@Override
 			public void onTapMapView(GeoPoint p) {
+				// 隐藏弹窗
+				pop.hidePop();
+				/**
+				 * 
+				 * 暂时取消手工上报功能
+				 * 
 				// 确认是否手工上报
 				//mTapItem = mRadOverlay.AddOverlayItem(p, "手动添加", "手动添加辐射点", RadiationMainMap.this.getResources().getDrawable(R.drawable.icon_gcoding));
 				mTapPoint = p;
@@ -266,7 +294,7 @@ public class RadiationMainMap extends Activity implements BDLocationListener,Get
 					}
 				});
 				builder.create().show();
-				
+				*/
 			}
         	
         };
@@ -325,7 +353,8 @@ public class RadiationMainMap extends Activity implements BDLocationListener,Get
 				 *  地图完成带动画的操作（如: animationTo()）后，此回调被触发
 				 */
 				// 拉取辐射点列表
-				mGetlist.getList(mMapView.getMapCenter());
+				// 通过定时task拉取
+				//mGetlist.getList(mMapView.getMapCenter());
 			}
             /**
              * 在此处理地图载完成事件 
@@ -346,6 +375,7 @@ public class RadiationMainMap extends Activity implements BDLocationListener,Get
     	/**
     	 *  MapView的生命周期与Activity同步，当activity挂起时需调用MapView.onPause()
     	 */
+    	mLocationClient.stop();
         mMapView.onPause();
         mAlarmCheck.unRegisterDevice();
         super.onPause();
@@ -357,6 +387,26 @@ public class RadiationMainMap extends Activity implements BDLocationListener,Get
     	 *  MapView的生命周期与Activity同步，当activity恢复时需调用MapView.onResume()
     	 */
         mMapView.onResume();
+        
+        // 获取配置参数
+ 		SharedPreferences shp = PreferenceManager.getDefaultSharedPreferences(this);
+ 		int maxval = shp.getInt("radVal", 9000);
+ 		int magcnt = Integer.parseInt(shp.getString("magList", "1"));
+ 		int alarmval = shp.getInt("alarmVal", 12);
+ 		boolean moveable = shp.getBoolean("moveable", false);
+ 		
+ 		this.alarmDistance = shp.getInt("distVal", 10);
+ 		
+ 		Log.d("radpref", "get max: "+maxval+" magcnt: "+magcnt+"alrm: "+alarmval+" mv: "+moveable);
+ 		
+ 		//registerReceiver(mBR, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+ 		mAlarmCheck.setMaxFangcha(maxval);
+ 		mAlarmCheck.setMagLimit(magcnt);
+ 		mAlarmCheck.setAlarmLimit(alarmval);
+ 		mAlarmCheck.setMoveable(moveable);
+        
+        // 启动定位服务
+        mLocationClient.start();
         
         int reqret = 0;
         if (mLocationClient != null && mLocationClient.isStarted())
@@ -467,6 +517,11 @@ public class RadiationMainMap extends Activity implements BDLocationListener,Get
 		mLon = arg0.getLongitude();
 		mRad = arg0.getRadius();
 		
+		if ( lastLat == 0f ) {
+			lastLat = mLat;
+			lastLon = mLon;
+		}
+		
 		mSpeed = 0f;
 		mNumSat = 0;
 		mAddr = "";
@@ -480,6 +535,24 @@ public class RadiationMainMap extends Activity implements BDLocationListener,Get
 		if ( bCenterflag )
 			setLocationCenter(mLat, mLon, null);
 		
+		if ( updatelocCount == 0 || 
+				DistanceUtil.getDistance(BMapUtil.genGeoPoint(lastLat, lastLon), BMapUtil.genGeoPoint(mLat, mLon)) > 100.0f )
+		{
+			// 距离变化超过10m，或时间超过5分钟，则拉取威胁点列表
+			mGetlist.getList(BMapUtil.genGeoPoint(mLat, mLon));
+			
+			// 并上报位置
+			ReportRadLocation r = new ReportRadLocation(RadiationMainMap.this.getApplicationContext());
+			r.setReportParam(mLat, mLon, 0f, 0f, 0f, 0f, ReportRadLocation.TYPE_RP);
+			r.go();
+		}
+		
+		updatelocCount = (updatelocCount+1) % (UPDATE_TIME*1000/UPDATE_LOC);
+		
+		
+		/*
+		 * 定位功能已包含定时器，不需要再设置
+		 * 
 		// 设置定时器
 		if ( timer == null ) {
 			timer = new Timer();
@@ -493,9 +566,11 @@ public class RadiationMainMap extends Activity implements BDLocationListener,Get
 				
 			};
 			
-			// 10s后开始执行，每5分钟执行一次
-			timer.schedule(task, 10000, 300000);
+			// 1s后开始执行，每5分钟执行一次
+			timer.schedule(task, 1000, 300000)；
+
 		}
+		 */		
 	}
 
 	@Override
@@ -510,37 +585,57 @@ public class RadiationMainMap extends Activity implements BDLocationListener,Get
 		// 在图上画点
 		Iterator<RadPoint> it = arr.iterator();
 		RadPoint pAlarm = null;
+		GeoPoint p2 = BMapUtil.genGeoPoint(mLat, mLon);
+		int cnt = 0;
 		
 		while ( it.hasNext() ) {
 			RadPoint p = it.next();
 			GeoPoint pp = BMapUtil.genGeoPoint(p.lat, p.lon);
-			mRadOverlay.AddOverlayItem(pp, "辐射点", "辐射点信息", null);
 			
-			GeoPoint p2 = BMapUtil.genGeoPoint(mLat, mLon);
-			if ( DistanceUtil.getDistance(pp, p2) < 5.0f ) {
+			if ( DistanceUtil.getDistance(pp, p2) < alarmDistance ) {
 				pAlarm = p;
+				mRadOverlay.AddOverlayItem(pp, "告警点", "告警点信息", this.getResources().getDrawable(R.drawable.delete_icon));
+				cnt++;
+			} else {
+				mRadOverlay.AddOverlayItem(pp, "辐射点", "辐射点信息", null);
 			}
 		}
 		
-		if ( pAlarm == null ) {
+		if ( pAlarm != null ) {
 			if ( pAlarm.maxval < 20000 ) {
 				// 延迟告警
-				new ThreadShow(300000, 1);
+				show_Long.Do();
 			} else {
-				new ThreadShow(5000, 2);
+				show_Short.Do();
 			}
+			Toast.makeText(this, "您附近有"+cnt+"个风险点", Toast.LENGTH_LONG).show();
+		} else {
+			// test
+			//show_Long.Do();
+			//show_Short.Do();
 		}
+		
+		// 显示当前位置
+		GeoPoint pp = BMapUtil.genGeoPoint(mLat, mLon);
+		mRadOverlay.AddOverlayItem(pp, "当前位置", "当前位置", this.getResources().getDrawable(R.drawable.nav_turn_via_1));
+		
+		lastLat = mLat;
+		lastLon = mLon;
 	}
+	
+	ThreadShow show_Short = new ThreadShow(10000, 2);
+	ThreadShow show_Long = new ThreadShow(30000, 1);
+	static int alarm_cnt = 0;
 	
 	Handler handler = new Handler() {  
         public void handleMessage(Message msg) {  
             switch(msg.what) {  
             case 1:
             	// 在提示栏提示告警
-    			showDefaultNotification("您附近存在低量辐射", "请小心，注意活动、远离");
+    			showDefaultNotification("您附近存在低量辐射", "请注意多活动、远离", R.drawable.arrow+(alarm_cnt++));
     			break;
             case 2:
-            	showDefaultNotification("您附近存在高量辐射", "请即刻远离");
+            	showDefaultNotification("您附近存在高量辐射", "请即刻远离", R.drawable.icon_gcoding+(alarm_cnt++));
             	break;
             default:
             	break;
@@ -552,29 +647,39 @@ public class RadiationMainMap extends Activity implements BDLocationListener,Get
     private class ThreadShow implements Runnable {
     	private int delay = 0;
     	private int id = 0;
+    	private Thread last = null;
     	
     	public ThreadShow(int mill, int msgid) {
     		delay = mill;
     		id = msgid;
     	}
+    	
+    	public void Do() {
+    		if ( last==null || !last.isAlive() ) {
+    			last = new Thread(this);
+    			last.start();
+    		} else {
+    			//Log.d("test", "test");
+    		}
+    	}
   
         @Override  
         public void run() {  
             // 定时发消息
-            while (true) {  
+            do {  
                 try {  
                     Thread.sleep(delay);  
-                    Message msg = new Message();  
+                    Message msg = handler.obtainMessage();
                     msg.what = id;  
                     handler.sendMessage(msg);  
-                } catch (Exception e) {  
+                } catch (Exception e) {
                     e.printStackTrace();  
                 }  
-            }  
+            } while (false); 
         }  
     }
     
-	private void showDefaultNotification(String title, String content) {
+	private void showDefaultNotification(String title, String content, int id) {
 		Notification noti = new Notification();
 		
 		noti.icon = R.drawable.icon_geo;
@@ -584,10 +689,21 @@ public class RadiationMainMap extends Activity implements BDLocationListener,Get
 		noti.defaults |= Notification.DEFAULT_SOUND | Notification.DEFAULT_VIBRATE;
 		noti.flags |= Notification.FLAG_AUTO_CANCEL;
 		
-		PendingIntent contentIntent = PendingIntent.getActivity(RadiationMainMap.this, 0, new Intent("android.settings.SETTINGS"), 0);
-		noti.setLatestEventInfo(RadiationMainMap.this, "附近有辐射", content, contentIntent);
+		Intent toIntent = new Intent(this, RadiationMainMap.class);
+		toIntent.setFlags(Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT);// 返回之前的activity，不要创建新的
+		
+		/*
+		 * 其中PendingIntent中的PendingIntent.FLAG_UPDATE_CURRENT属性的作用是如果我在从系统中提取一个PendingIntent，
+		 * 而系统中有一个和你描述的PendingIntent对等的PendingInent, 那么系统会直接返回和该PendingIntent其实是同一token
+		 * 的PendingIntent，而不是一个新的token的PendingIntent。如果我们使用了FLAG_UPDATE_CURRENT的话，新的Intent会更
+		 * 新之前PendingIntent中的Intent对象数据，当然也会更新Intent中的Extras。
+		 */
+		PendingIntent contentIntent = PendingIntent.getActivity(RadiationMainMap.this, 0, toIntent, 
+				PendingIntent.FLAG_UPDATE_CURRENT);
+		noti.setLatestEventInfo(RadiationMainMap.this, title, content, contentIntent);
+		//noti.contentIntent = contentIntent;
 		
 		NotificationManager notiM = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
-		notiM.notify(2, noti);
+		notiM.notify(id, noti);
 	}
 }

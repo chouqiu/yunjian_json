@@ -89,6 +89,7 @@ public class StatusExpandAdapter extends BaseExpandableListAdapter {
 			holder.group_tiao = (TextView) convertView.findViewById(R.id.group_tiao);
 			holder.eventName = (TextView) convertView.findViewById(R.id.one_complete_name);
 			holder.statTime = (TextView) convertView.findViewById(R.id.one_status_time);
+			holder.statTimeNew = (TextView) convertView.findViewById(R.id.one_status_time_new);
 			//String html = "<b>"+oneList.get(groupPosition).getStatusName()+"</b><br/>"+
 			//		oneList.get(groupPosition).getEventName()+"<br/>"+
 			//		oneList.get(groupPosition).getCompleteTime();
@@ -97,16 +98,21 @@ public class StatusExpandAdapter extends BaseExpandableListAdapter {
 			holder.groupName.setText(oneList.get(groupPosition).getStatusName());
 			holder.eventName.setText(oneList.get(groupPosition).getCompleteTime());
 			holder.statTime.setText(oneList.get(groupPosition).getEventName());
+			holder.statTimeNew.setText(oneList.get(groupPosition).getEventName());
 			
 			//LayoutParams lp = convertView.getLayoutParams();
 			//lp.height += 20;
 			//convertView.setLayoutParams(lp);
 			
-			//if(oneList.get(groupPosition).getTwoList().get(0).isIsfinished()){
+			if(oneList.get(groupPosition).isFinish()){
 				holder.group_tiao.setBackgroundColor(context.getResources().getColor(R.color.yellow));
-			//}else{
-			//	holder.group_tiao.setBackgroundColor(context.getResources().getColor(R.color.grey));
-			//}
+				holder.statTime.setVisibility(View.VISIBLE);
+				holder.statTimeNew.setVisibility(View.GONE);
+			}else{
+				holder.group_tiao.setBackgroundColor(context.getResources().getColor(R.color.grey));
+				holder.statTime.setVisibility(View.GONE);
+				holder.statTimeNew.setVisibility(View.VISIBLE);
+			}
 			
 		} else {
 			/*
@@ -162,6 +168,7 @@ public class StatusExpandAdapter extends BaseExpandableListAdapter {
 				viewHolder.childName = (TextView) convertView.findViewById(R.id.two_status_name);
 				viewHolder.twoStatusTime = (TextView) convertView.findViewById(R.id.two_status_time);
 				viewHolder.twoStatusDate = (TextView) convertView.findViewById(R.id.two_status_date);
+				viewHolder.twoStatusTimeNew = (TextView) convertView.findViewById(R.id.two_status_time_new);
 				//viewHolder.twoStatusTime = (TextView) convertView.findViewById(R.id.two_complete_time);
 				viewHolder.tiao = (TextView) convertView.findViewById(R.id.tiao);
 			}
@@ -169,6 +176,7 @@ public class StatusExpandAdapter extends BaseExpandableListAdapter {
 			//String html = "<b>"+entity.getStatusName()+"</b><br/>"+entity.getCompleteTime();
 			//viewHolder.childName.setText(Html.fromHtml(html));
 			viewHolder.twoStatusTime.setText(entity.getEventName());
+			viewHolder.twoStatusTimeNew.setText(entity.getEventName());
 			viewHolder.twoStatusDate.setText(entity.getCompleteTime());
 			viewHolder.childName.setText(entity.getStatusName());
 			
@@ -177,8 +185,12 @@ public class StatusExpandAdapter extends BaseExpandableListAdapter {
 			
 			if(entity.isIsfinished()){
 				viewHolder.tiao.setBackgroundColor(context.getResources().getColor(R.color.yellow));
+				viewHolder.twoStatusTime.setVisibility(View.VISIBLE);
+				viewHolder.twoStatusTimeNew.setVisibility(View.GONE);
 			}else{
 				viewHolder.tiao.setBackgroundColor(context.getResources().getColor(R.color.grey));
+				viewHolder.twoStatusTime.setVisibility(View.GONE);
+				viewHolder.twoStatusTimeNew.setVisibility(View.VISIBLE);
 			}
 			
 			convertView.setTag(viewHolder);
@@ -221,6 +233,7 @@ public class StatusExpandAdapter extends BaseExpandableListAdapter {
 	private class GroupViewHolder {
 		public TextView groupName;
 		public TextView eventName;
+		public TextView statTimeNew;
 		public TextView statTime;
 		public TextView group_tiao;
 	}
@@ -228,6 +241,7 @@ public class StatusExpandAdapter extends BaseExpandableListAdapter {
 	private class ChildViewHolder {
 		public TextView childName;
 		public TextView twoStatusTime;
+		public TextView twoStatusTimeNew;
 		public TextView twoStatusDate;
 		public TextView tiao;
 	}

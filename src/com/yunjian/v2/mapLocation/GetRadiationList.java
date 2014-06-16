@@ -28,6 +28,14 @@ public class GetRadiationList implements TaskListener {
 		GetRadiationTask t = new GetRadiationTask(mCenter, mLastUpdateTimestamp, this);
 		t.go();
 	}
+	
+	public RadPoint GetPoint(int idx) {
+		if ( idx >= 0 && idx < mList.size() ) {
+			return mList.get(idx);
+		} else {
+			return null;
+		}
+	}
 
 	@Override
 	public void onGetList(String json) {
@@ -75,7 +83,7 @@ class GetRadiationTask extends GetTask {
 	public GetRadiationTask(GeoPoint p, long last, TaskListener l) {
 		mCurPoint = p;
 		mL = l;
-		mLast = last;
+		mLast = last; // 最后更新时间
 	}
 	
 	@Override

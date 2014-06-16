@@ -47,7 +47,7 @@
     <uses-permission android:name="android.permission.ACCESS_GPS" />
 
     <uses-sdk
-        android:minSdkVersion="14"
+        android:minSdkVersion="10"
         android:targetSdkVersion="16" />
 
     <supports-screens
@@ -93,9 +93,8 @@
 
         <activity
             android:name="com.yunjian.v2.yunjian_json.PersonalMain"
-            android:configChanges="orientation|keyboardHidden|screenSize"
-            android:label="@string/title_activity_personal_main"
-            android:theme="@style/FullscreenTheme" >
+            android:configChanges="orientation|keyboardHidden"
+            android:label="@string/title_activity_personal_main" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

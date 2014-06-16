@@ -29,6 +29,16 @@
 		    robobunny:step="1"
 		    robobunny:unitsLeft="" 
 		    robobunny:unitsRight="" />
+		<com.yunjian.v2.yunjian_json.SeekBarPreference 
+		    android:key="distVal" 
+		    android:title="距离告警阈值" 
+		    android:summary="设置距离告警阈值" 
+		    android:defaultValue="10" 
+		    android:max="100" 
+		    robobunny:min="1"
+		    robobunny:step="1"
+		    robobunny:unitsLeft="" 
+		    robobunny:unitsRight="m" />
 	</PreferenceCategory>
 
     <!--

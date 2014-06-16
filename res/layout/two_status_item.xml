@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#00000000"
-    android:minHeight="10dp"
+    android:minHeight="90dp"
     android:gravity="center_vertical" >
 
     <FrameLayout
@@ -63,23 +63,34 @@
 	                android:layout_height="wrap_content"    
 	                style="@style/chat_text_name_style"/>
                 </LinearLayout>
+
                 <LinearLayout
-		        android:id="@+id/linearLayout23"
-		        android:layout_width="wrap_content"
-		        android:layout_height="wrap_content"
-		        android:layout_gravity="center_vertical"
-		        android:gravity="center_vertical"
-		        android:layout_marginLeft="2dp"
-	            android:layout_weight="2"
-		        android:orientation="horizontal" >
+                    android:id="@+id/linearLayout23"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="right|center_vertical"
+                    android:layout_marginLeft="2dp"
+                    android:layout_weight="2"
+                    android:gravity="right|center_vertical"
+                    android:orientation="horizontal" >
 
 	                <TextView
 	                    android:id="@+id/two_status_time"
 	                    style="@style/chat_content_date_style"
 	                    android:layout_width="wrap_content"
 	                    android:layout_height="wrap_content"
-	                    android:drawableRight="@drawable/arrow"
-	                    android:gravity="right|center_vertical" />
+	                    android:drawableRight="@drawable/point_normal"
+	                    android:text="placeTwo"
+	                    android:gravity="center_vertical" />
+
+					<TextView
+					    android:id="@+id/two_status_time_new"
+					    style="@style/chat_content_date_style"
+					    android:layout_width="wrap_content"
+					    android:layout_height="wrap_content"
+					    android:gravity="center_vertical"
+					    android:drawableRight="@drawable/point_selected"
+					    android:visibility="gone" />
 
 				</LinearLayout>
 			</LinearLayout>

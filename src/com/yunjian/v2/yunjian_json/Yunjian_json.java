@@ -151,7 +151,6 @@ public class Yunjian_json extends Activity {
 		mChecker.setMoveable(moveable);
 		mChecker.registerDevice();
 		
-		
 		/*
 		GetJson proc = new GetJson();
 		proc.initHeaders("Content-Type", "application/json");

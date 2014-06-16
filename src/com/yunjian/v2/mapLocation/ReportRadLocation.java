@@ -13,9 +13,10 @@ public class ReportRadLocation extends PostTask {
 	private String mIMEI;
 	private JsonHelper mJson = null;
 	
-	public final static String TYPE_MF = "MF";
-	public final static String TYPE_EF = "EF";
-	public final static String TYPE_RF = "RF";
+	public final static String TYPE_MF = "MF"; // 磁场
+	public final static String TYPE_EF = "EF"; // 电场
+	public final static String TYPE_RF = "RF"; // 手动上报数据
+	public final static String TYPE_RP = "RP"; // 上报位置
 	
 	public ReportRadLocation(Context con) {
 		super();
